@@ -1,12 +1,15 @@
 import Phaser from 'phaser';
 
+export const GAME_WIDTH = 1920;
+export const GAME_HEIGHT = 1080;
+
 export default {
   type: Phaser.AUTO,
   parent: 'game',
   backgroundColor: '#091b2f',
   scale: {
-    width: 1920,
-    height: 1080,
+    width: GAME_WIDTH,
+    height: GAME_HEIGHT,
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH
   }
