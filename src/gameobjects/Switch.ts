@@ -42,7 +42,7 @@ export class Switch extends Phaser.GameObjects.Image implements ConnectionPartne
     }
 
     consume(power: boolean): void {
-        this.anyPowerProvided = power
+        this.anyPowerProvided ||= power
     }
 
     setOn(value: boolean) {

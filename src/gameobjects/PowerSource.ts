@@ -24,10 +24,10 @@ export class PowerSource extends Phaser.GameObjects.Image implements ConnectionP
         return false;
     }
     powerAvailableAfter(power: boolean): boolean {
-        throw new Error("Method not implemented.");
+        return true
     }
     powerForwardCanBeChecked(): boolean {
-        throw new Error("Method not implemented.");
+        return true
     }
     isSource(): boolean {
         return true;

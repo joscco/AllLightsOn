@@ -45,21 +45,33 @@ export default class GameScene extends Phaser.Scene {
 
         this.connectionLayer = this.add.layer()
         this.connectionLayer.setDepth(1)
-
         this.itemLayer = this.add.layer()
         this.itemLayer.setDepth(2)
 
         const power = new PowerSource(this);
-
+        const power2 = new PowerSource(this);
         const switcher = new Switch(this, false);
         const switcher2 = new Switch(this, false);
         const light = new Light(this, false);
         const light2 = new Light(this, false);
+        const light3 = new Light(this, false);
 
-        this.itemLayer.add([power, switcher, switcher2, light, light2])
-        this.items.push(power, switcher, switcher2, light, light2);
+        this.itemLayer.add([power, power2, switcher, switcher2, light, light2, light3])
+        this.items.push(power, power2, switcher, switcher2, light, light2, light3);
 
-        this.items.forEach(item => {
+        this.defineItemLogic(this.items, grid);
+
+        grid.addAtIndex({x: -10, y: -5}, power)
+        grid.addAtIndex({x: -10, y: 5}, power2)
+        grid.addAtIndex({x: 0, y: -5}, switcher)
+        grid.addAtIndex({x: 0, y: 5}, switcher2)
+        grid.addAtIndex({x: 10, y: -5}, light)
+        grid.addAtIndex({x: 10, y: 0}, light2)
+        grid.addAtIndex({x: 10, y:5}, light3)
+    }
+
+    private defineItemLogic(items: ConnectionPartner[], grid: Grid) {
+        items.forEach(item => {
             item.setInteractive({draggable: true})
 
             var itemTime = 0
@@ -67,7 +79,7 @@ export default class GameScene extends Phaser.Scene {
             var itemPath: Vec2[];
 
             item.on('pointerdown', (pointer: Vector2) => {
-                if (this.getConnectionsForItem(this.connections, item) < item.getMaxNumberOfConnections()) {
+                if (this.getConnectionsForItem(this.connections, item).length < item.getMaxNumberOfConnections()) {
                     itemTime = this.time.now
                     connection = new Connection(this)
                     this.connectionLayer?.add(connection)
@@ -101,12 +113,6 @@ export default class GameScene extends Phaser.Scene {
                 }
             })
         })
-
-        grid.addAtIndex({x: -10, y: 0}, power)
-        grid.addAtIndex({x: -5, y: 0}, switcher)
-        grid.addAtIndex({x: 0, y: 0}, switcher2)
-        grid.addAtIndex({x: 5, y: 0}, light)
-        grid.addAtIndex({x: 10, y: 0}, light2)
     }
 
     private addPointToPath(grid: Grid, pointer: Phaser.Math.Vector2, switcherPath: Vec2[], connection: Connection): Vec2[] {
@@ -114,7 +120,7 @@ export default class GameScene extends Phaser.Scene {
         var itemAtIndex = grid.getItemAtIndex(indexForPointer)
         if (itemAtIndex
             && itemAtIndex != connection.getStart()
-            && this.getConnectionsForItem(this.connections, itemAtIndex) < itemAtIndex.getMaxNumberOfConnections()) {
+            && this.getConnectionsForItem(this.connections, itemAtIndex).length < itemAtIndex.getMaxNumberOfConnections()) {
             connection.setEnd(itemAtIndex)
         }
 
@@ -146,10 +152,9 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
-    private getConnectionsForItem(connections: Connection[], itemAtIndex: ConnectionPartner): number {
+    private getConnectionsForItem(connections: Connection[], itemAtIndex: ConnectionPartner): Connection[] {
         return connections
             .filter(connection => connection.getEnd() == itemAtIndex || connection.getStart() == itemAtIndex)
-            .length
     }
 
     private oneIntoDirectionOf(from: number, to: number) {
@@ -178,14 +183,24 @@ export default class GameScene extends Phaser.Scene {
         // Also non powers have to be forwarded!
         var leftConnections = connections.filter(connection => !connection.isInUse())
         for (let connection of leftConnections) {
+
             if (connection.getStart() == source || connection.getEnd() == source) {
-                connection.setInUse(true)
+                connection.alpha = 0.5
+                if (power) {
+                    connection.alpha = 1
+                }
+
                 let otherPartner = [connection.getEnd(), connection.getStart()].find(el => el != source)!
                 otherPartner.consume(power)
 
-                var numberOfLeftConnectionsToConsume = this.getConnectionsForItem(leftConnections, otherPartner) - 1
+                // Here are only those relevant that can provide energy!
+                var leftIncomingConnections = this.getConnectionsForItem(leftConnections, otherPartner)
+                    .map(connection => [connection.getStart(), connection.getEnd()].filter(partner => partner != otherPartner)[0]!)
+                    .filter(item => item.isSource() || item.isForwarder())
+                var numberOfLeftIncomingConnections = leftIncomingConnections.length - 1
 
-                if (otherPartner.isForwarder() && otherPartner.powerForwardCanBeChecked(numberOfLeftConnectionsToConsume)) {
+                if (otherPartner.isForwarder() && otherPartner.powerForwardCanBeChecked(numberOfLeftIncomingConnections)) {
+                    connection.setInUse(true)
                     this.forwardPower(otherPartner.powerAvailableAfter(power), otherPartner, leftConnections)
                 }
             }

@@ -20,6 +20,7 @@ export class Connection extends Graphics {
                 width: 7
             }
         })
+        this.alpha = 0.5
         scene.add.existing(this)
     }
 
