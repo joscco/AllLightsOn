@@ -1,7 +1,7 @@
 import Phaser from "phaser";
-import {Consumer} from "../interfaces/Consumer";
+import {ConnectionPartner} from "../interfaces/ConnectionPartner";
 
-export class Light extends Phaser.GameObjects.Image implements Consumer {
+export class Light extends Phaser.GameObjects.Image implements ConnectionPartner {
     private _isOn?: boolean;
 
     constructor(scene: Phaser.Scene, on: boolean) {
@@ -9,6 +9,31 @@ export class Light extends Phaser.GameObjects.Image implements Consumer {
         this.setOrigin(0.5, 0.7)
         this.setOn(on)
         scene.add.existing(this)
+    }
+
+    onClick() {
+        return
+    }
+
+    powerCanBeForwarded(power: boolean): boolean {
+        throw new Error("Method not implemented.");
+    }
+    powerForwardCanBeChecked(): boolean {
+        throw new Error("Method not implemented.");
+    }
+
+    isLightBulb(): boolean {
+        return true
+    }
+
+    getMaxNumberOfConnections(): number {
+        return 1
+    }
+    isForwarder(): boolean {
+        return false
+    }
+    isSource(): boolean {
+        return false
     }
 
     private setOn(value: boolean) {

@@ -1,53 +1,64 @@
 import Phaser from "phaser";
 import {Vec2, vec2Mean} from "../Helpers/Dict";
 import {ConnectionPartner} from "../interfaces/ConnectionPartner";
+import {Grid} from "./Grid";
 import Graphics = Phaser.GameObjects.Graphics;
 import QuadraticBezier = Phaser.Curves.QuadraticBezier;
 import Line = Phaser.Curves.Line;
 import Vector2 = Phaser.Math.Vector2;
 import Path = Phaser.Curves.Path;
-import {Grid} from "./Grid";
-import Container = Phaser.GameObjects.Container;
 
-export class Connection extends Container{
+export class Connection extends Graphics {
     private indexPath: Vec2[] = []
-    private firstEnd?: ConnectionPartner
-    private secondEnd?: ConnectionPartner
+    private start?: ConnectionPartner
+    private end?: ConnectionPartner
     private inUse: boolean = false
 
-    private graphics: Graphics
-
     constructor(scene: Phaser.Scene) {
-        super(scene)
-        scene.add.existing(this)
-        this.graphics = scene.add.graphics({
+        super(scene, {
             lineStyle: {
                 width: 7
             }
         })
-        this.add(this.graphics)
+        scene.add.existing(this)
     }
-    
+
     isInUse(): boolean {
         return this.inUse;
+    }
+
+    getStart(): ConnectionPartner | undefined {
+        return this.start;
+    }
+
+    setStart(start: ConnectionPartner) {
+        this.start = start
+    }
+
+    getEnd(): ConnectionPartner | undefined {
+        return this.end
+    }
+
+    setEnd(end: ConnectionPartner) {
+        this.end = end
     }
 
     setPath(path: Vec2[]) {
         this.indexPath = path
     }
-    
-    draw(grid: Grid<any>) {
+
+    draw(grid: Grid) {
         // Drawing Path
 
         var pathsWithBetweens: Vec2[] = []
         for (let i = 0; i < this.indexPath.length - 1; i++) {
-            pathsWithBetweens.push(this.indexPath[i], vec2Mean(this.indexPath[i], this.indexPath[i+1]))
+            pathsWithBetweens.push(this.indexPath[i], vec2Mean(this.indexPath[i], this.indexPath[i + 1]))
         }
         pathsWithBetweens.push(this.indexPath.at(-1)!)
 
         var switcherPositionPath = pathsWithBetweens.map(index => grid.getPositionForIndex(index))
 
-        this.graphics.clear()
+        this.clear()
         var path = new Path();
         for (let i = 0; i < switcherPositionPath.length - 1; i++) {
             var first = switcherPositionPath[i]
@@ -61,6 +72,10 @@ export class Connection extends Container{
                 path.add(new Line([first.x, first.y, second.x, second.y]))
             }
         }
-        path.draw(this.graphics)
+        path.draw(this)
+    }
+
+    setInUse(value: boolean) {
+        this.inUse = false
     }
 }

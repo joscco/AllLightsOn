@@ -1,20 +1,39 @@
 import Phaser from "phaser";
-import {Consumer} from "../interfaces/Consumer";
+import {ConnectionPartner} from "../interfaces/ConnectionPartner";
 
-export class PowerSource extends Phaser.GameObjects.Image {
-    private consumers: Consumer[]
+export class PowerSource extends Phaser.GameObjects.Image implements ConnectionPartner{
 
     constructor(scene: Phaser.Scene) {
         super(scene, 0, 0, 'power_on');
         scene.add.existing(this)
-        this.consumers = [];
     }
 
-    addConsumer(newConsumer: Consumer) {
-        this.consumers.push(newConsumer)
+    isLightBulb(): boolean {
+        return false
     }
 
-    supply(power: boolean) {
-        this.consumers.forEach(consumer => consumer.consume(power));
+    getMaxNumberOfConnections(): number {
+        return 1
+    }
+
+    isForwarder(): boolean {
+        return false;
+    }
+    powerCanBeForwarded(power: boolean): boolean {
+        throw new Error("Method not implemented.");
+    }
+    powerForwardCanBeChecked(): boolean {
+        throw new Error("Method not implemented.");
+    }
+    isSource(): boolean {
+        return true;
+    }
+
+    onClick() {
+        return
+    }
+
+    consume(power: boolean): void {
+        return
     }
 }

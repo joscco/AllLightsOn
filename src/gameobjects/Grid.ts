@@ -1,9 +1,9 @@
-import Transform = Phaser.GameObjects.Components.Transform;
 import Graphics = Phaser.GameObjects.Graphics;
 import {Scene} from "phaser";
 import {Vec2, Vector2Dict,} from "../Helpers/Dict";
+import {ConnectionPartner} from "../interfaces/ConnectionPartner";
 
-export class Grid<K extends Transform> extends Graphics{
+export class Grid extends Graphics{
     x: number
     y: number
     private columns: number
@@ -15,7 +15,7 @@ export class Grid<K extends Transform> extends Graphics{
 
     private graphics;
 
-    private items: Vector2Dict<K> = new Vector2Dict();
+    private items: Vector2Dict<ConnectionPartner> = new Vector2Dict();
 
     constructor(scene: Scene, x: number, y: number, columns: number, rows: number, colWidth: number, rowWidth: number) {
         super(scene);
@@ -44,7 +44,7 @@ export class Grid<K extends Transform> extends Graphics{
         this.graphics.setAlpha(0)
     }
 
-    addAtIndex(index: Vec2, item: K) {
+    addAtIndex(index: Vec2, item: ConnectionPartner) {
         this.items.set(index, item)
         var newPos = this.getPositionForIndex(index)
         item.setPosition(newPos.x, newPos.y)
@@ -67,5 +67,9 @@ export class Grid<K extends Transform> extends Graphics{
 
     showGrid() {
         this.graphics.setAlpha(1)
+    }
+
+    getItemAtIndex(index: Vec2): ConnectionPartner | undefined {
+        return this.items.get(index)
     }
 }
