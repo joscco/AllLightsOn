@@ -3,7 +3,7 @@ import {Scene} from "phaser";
 import {Vec2, Vector2Dict,} from "../Helpers/Dict";
 import {ConnectionPartner} from "../interfaces/ConnectionPartner";
 
-export class Grid extends Graphics{
+export class Grid extends Graphics {
     x: number
     y: number
     private columns: number
@@ -13,7 +13,8 @@ export class Grid extends Graphics{
     private evenColsOffset: number
     private evenRowsOffset: number
 
-    private graphics;
+    private freeFieldGraphics: Graphics;
+    private usedFieldGraphics: Graphics;
 
     private items: Vector2Dict<ConnectionPartner> = new Vector2Dict();
 
@@ -29,26 +30,35 @@ export class Grid extends Graphics{
         this.evenColsOffset = (this.columns % 2 == 0) ? this.colWidth / 2 : 0
         this.evenRowsOffset = (this.rows % 2 == 0) ? this.rowWidth / 2 : 0
 
-        this.graphics = scene.add.graphics({
+        this.freeFieldGraphics = scene.add.graphics({
             fillStyle: {
                 color: 0x1b3953
             }
         })
-
-        for (let x = -columns / 2; x <= columns / 2; x++) {
-            for (let y = -rows / 2; y <= rows / 2; y++) {
-                var pos = this.getPositionForIndex({x: x, y: y})
-                this.graphics.fillPoint(pos.x, pos.y, 5)
+        this.usedFieldGraphics = scene.add.graphics({
+            fillStyle: {
+                color: 0xff0000
             }
-        }
-        this.graphics.setAlpha(0)
+        })
+        this.updateGridRender()
+        this.freeFieldGraphics.setAlpha(0)
+        this.usedFieldGraphics.setAlpha(0)
     }
 
     addAtIndex(index: Vec2, item: ConnectionPartner) {
-        this.items.set(index, item)
-        var newPos = this.getPositionForIndex(index)
-        item.setPosition(newPos.x, newPos.y)
+        for (let colOffset = 0; colOffset < item.getColWidth(); colOffset++) {
+            for (let rowOffset = 0; rowOffset < item.getRowWidth(); rowOffset++) {
+                let offsetIndex = {x: index.x + colOffset, y: index.y + rowOffset}
+                this.items.set(offsetIndex, item)
+            }
+        }
+        this.updateGridRender()
 
+        var topRight = this.getPositionForIndex({
+            x: index.x + (item.getColWidth() - 1) / 2,
+            y: index.y + (item.getRowWidth() - 1) / 2
+        })
+        item.setPosition(topRight.x, topRight.y)
     }
 
     getPositionForIndex(index: Vec2): Vec2 {
@@ -66,10 +76,28 @@ export class Grid extends Graphics{
     }
 
     showGrid() {
-        this.graphics.setAlpha(1)
+        this.freeFieldGraphics.setAlpha(1)
+        this.usedFieldGraphics.setAlpha(1)
     }
 
     getItemAtIndex(index: Vec2): ConnectionPartner | undefined {
         return this.items.get(index)
+    }
+
+    private updateGridRender() {
+        this.freeFieldGraphics.clear()
+        this.usedFieldGraphics.clear()
+        for (let x = -this.columns / 2; x <= this.columns / 2; x++) {
+            for (let y = -this.rows / 2; y <= this.rows / 2; y++) {
+                var index = {x: x, y: y}
+                var pos = this.getPositionForIndex(index)
+                if (this.items.has(index)) {
+                    this.usedFieldGraphics.fillPoint(pos.x, pos.y, 5)
+                } else {
+                    this.freeFieldGraphics.fillPoint(pos.x, pos.y, 5)
+                }
+
+            }
+        }
     }
 }

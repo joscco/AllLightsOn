@@ -1,11 +1,19 @@
 import Phaser from "phaser";
 import {ConnectionPartner} from "../interfaces/ConnectionPartner";
 
-export class PowerSource extends Phaser.GameObjects.Image implements ConnectionPartner{
+export class PowerSource extends ConnectionPartner {
 
     constructor(scene: Phaser.Scene) {
-        super(scene, 0, 0, 'power_on');
+        super(scene, 'power_on');
         scene.add.existing(this)
+    }
+
+    getColWidth(): number {
+        return 4
+    }
+
+    getRowWidth(): number {
+        return 4
     }
 
     reset() {
@@ -23,12 +31,15 @@ export class PowerSource extends Phaser.GameObjects.Image implements ConnectionP
     isForwarder(): boolean {
         return false;
     }
+
     powerAvailableAfter(power: boolean): boolean {
         return true
     }
+
     powerForwardCanBeChecked(): boolean {
         return true
     }
+
     isSource(): boolean {
         return true;
     }

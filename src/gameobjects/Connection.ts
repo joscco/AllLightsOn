@@ -40,7 +40,7 @@ export class Connection extends Graphics {
         return this.end
     }
 
-    setEnd(end: ConnectionPartner) {
+    setEnd(end: ConnectionPartner | undefined) {
         this.end = end
     }
 
@@ -78,5 +78,9 @@ export class Connection extends Graphics {
 
     setInUse(value: boolean) {
         this.inUse = value
+    }
+
+    resetEnd() {
+        this.end = undefined
     }
 }

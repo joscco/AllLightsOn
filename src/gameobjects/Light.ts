@@ -1,18 +1,24 @@
 import Phaser from "phaser";
 import {ConnectionPartner} from "../interfaces/ConnectionPartner";
 
-export class Light extends Phaser.GameObjects.Image implements ConnectionPartner {
+export class Light extends  ConnectionPartner {
     private _isOn?: boolean;
-
     constructor(scene: Phaser.Scene, on: boolean) {
-        super(scene, 0, 0, 'light_off');
-        this.setOrigin(0.5, 0.7)
+        super(scene, 'light_off');
+
         this.setOn(on)
         scene.add.existing(this)
     }
 
     reset() {
         this.setOn(false)
+    }
+
+    getColWidth(): number {
+        return 3
+    }
+    getRowWidth(): number {
+        return 4
     }
 
     onClick() {

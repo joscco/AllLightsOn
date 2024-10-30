@@ -1,13 +1,13 @@
 import Phaser from "phaser";
 import {ConnectionPartner} from "../interfaces/ConnectionPartner";
 
-export class Switch extends Phaser.GameObjects.Image implements ConnectionPartner {
-    private _isOn: boolean;
+export class Switch extends ConnectionPartner {
+    private _isOn: boolean = false;
     private anyPowerProvided: boolean = false;
 
     constructor(scene: Phaser.Scene, on: boolean) {
-        super(scene, 0, 0, on ? 'switch_on' : 'switch_off');
-        this._isOn = on;
+        super(scene, 'switch_on');
+        this.setOn(on)
         scene.add.existing(this)
     }
 
@@ -15,9 +15,18 @@ export class Switch extends Phaser.GameObjects.Image implements ConnectionPartne
         this.anyPowerProvided = false
     }
 
+    getColWidth(): number {
+        return 4
+    }
+
+    getRowWidth(): number {
+        return 4
+    }
+
     powerAvailableAfter(power: boolean): boolean {
         return this.isOn() && this.anyPowerProvided
     }
+
     powerForwardCanBeChecked(numberOfLeftConnections: number): boolean {
         return numberOfLeftConnections == 0 || this.anyPowerProvided
     }
@@ -29,6 +38,7 @@ export class Switch extends Phaser.GameObjects.Image implements ConnectionPartne
     getMaxNumberOfConnections(): number {
         return 20
     }
+
     isForwarder(): boolean {
         return true
     }
