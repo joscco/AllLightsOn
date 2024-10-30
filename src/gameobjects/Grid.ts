@@ -1,10 +1,11 @@
-import Container = Phaser.GameObjects.Container;
 import Transform = Phaser.GameObjects.Components.Transform;
+import Graphics = Phaser.GameObjects.Graphics;
 import {Scene} from "phaser";
 import {Vec2, Vector2Dict,} from "../Helpers/Dict";
 
-export class Grid<K extends Transform> extends Container {
-
+export class Grid<K extends Transform> extends Graphics{
+    x: number
+    y: number
     private columns: number
     private rows: number
     private colWidth: number
@@ -17,7 +18,9 @@ export class Grid<K extends Transform> extends Container {
     private items: Vector2Dict<K> = new Vector2Dict();
 
     constructor(scene: Scene, x: number, y: number, columns: number, rows: number, colWidth: number, rowWidth: number) {
-        super(scene, x, y);
+        super(scene);
+        this.x = x
+        this.y = y
         this.columns = columns
         this.rows = rows
         this.colWidth = colWidth

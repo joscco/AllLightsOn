@@ -38,7 +38,7 @@ export class Connection extends Container{
     
     draw(grid: Grid<any>) {
         // Drawing Path
-        this.graphics.clear()
+
         var pathsWithBetweens: Vec2[] = []
         for (let i = 0; i < this.indexPath.length - 1; i++) {
             pathsWithBetweens.push(this.indexPath[i], vec2Mean(this.indexPath[i], this.indexPath[i+1]))
@@ -46,6 +46,8 @@ export class Connection extends Container{
         pathsWithBetweens.push(this.indexPath.at(-1)!)
 
         var switcherPositionPath = pathsWithBetweens.map(index => grid.getPositionForIndex(index))
+
+        this.graphics.clear()
         var path = new Path();
         for (let i = 0; i < switcherPositionPath.length - 1; i++) {
             var first = switcherPositionPath[i]
@@ -59,7 +61,6 @@ export class Connection extends Container{
                 path.add(new Line([first.x, first.y, second.x, second.y]))
             }
         }
-
         path.draw(this.graphics)
     }
 }
