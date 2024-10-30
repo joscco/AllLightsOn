@@ -77,14 +77,18 @@ export default class GameScene extends Phaser.Scene {
             })
 
             item.on('drag', (pointer: Vector2) => {
-                this.addPointToPath(grid, pointer, itemPath, connection);
+                if (connection) {
+                    itemPath = this.addPointToPath(grid, pointer, itemPath, connection);
+                    connection.setPath(itemPath)
+                    connection.draw(grid);
+                }
             })
 
             item.on('dragend', () => {
                 if (this.time.now - itemTime < 300) {
                     item.onClick()
                     this.checkSources()
-                } else {
+                } else if (connection) {
                     if (connection.getStart() && connection.getEnd()) {
                         this.connections.push(connection)
                         this.checkSources()
@@ -102,7 +106,7 @@ export default class GameScene extends Phaser.Scene {
         grid.addAtIndex({x: 10, y: 0}, light2)
     }
 
-    private addPointToPath(grid: Grid, pointer: Phaser.Math.Vector2, switcherPath: Vec2[], connection: Connection) {
+    private addPointToPath(grid: Grid, pointer: Phaser.Math.Vector2, switcherPath: Vec2[], connection: Connection): Vec2[] {
         var indexForPointer = grid.getIndexForPosition(pointer)
         var itemAtIndex = grid.getItemAtIndex(indexForPointer)
         if (itemAtIndex
@@ -115,7 +119,7 @@ export default class GameScene extends Phaser.Scene {
         var lastIndex = switcherPath.at(-1)!
         if (vec2Equals(indexForPointer, lastIndex)) {
             // Do nothing
-            return
+            return switcherPath
         } else {
             if (previousOccurenceInPath > -1) {
                 switcherPath = switcherPath.slice(0, Math.max(previousOccurenceInPath + 1, 1))
@@ -134,8 +138,8 @@ export default class GameScene extends Phaser.Scene {
                     switcherPath.push({x: curX, y: curY})
                 }
             }
-            connection.setPath(switcherPath)
-            connection.draw(grid);
+
+            return switcherPath
         }
     }
 
