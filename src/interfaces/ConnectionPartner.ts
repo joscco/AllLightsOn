@@ -6,6 +6,7 @@ export interface ConnectionPartner extends GameObject {
     setPosition(x?: number, y?: number): void,
 
     // Electricity stuff
+    reset(): void
     consume(power: boolean): void;
     getMaxNumberOfConnections(): number
     // Can this partner generally forward power?
@@ -13,9 +14,9 @@ export interface ConnectionPartner extends GameObject {
     isSource(): boolean
     isLightBulb(): boolean
     // Can this partner forward now if power is available
-    powerCanBeForwarded(power: boolean): boolean;
+    powerAvailableAfter(power: boolean): boolean;
     // Can this partners forwarding be checked now?
-    powerForwardCanBeChecked(): boolean;
+    powerForwardCanBeChecked(numberOfLeftConnections: number): boolean;
 
     onClick(): void;
 }

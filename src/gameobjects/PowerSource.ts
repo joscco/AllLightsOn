@@ -8,18 +8,22 @@ export class PowerSource extends Phaser.GameObjects.Image implements ConnectionP
         scene.add.existing(this)
     }
 
+    reset() {
+        return
+    }
+
     isLightBulb(): boolean {
         return false
     }
 
     getMaxNumberOfConnections(): number {
-        return 1
+        return 10
     }
 
     isForwarder(): boolean {
         return false;
     }
-    powerCanBeForwarded(power: boolean): boolean {
+    powerAvailableAfter(power: boolean): boolean {
         throw new Error("Method not implemented.");
     }
     powerForwardCanBeChecked(): boolean {

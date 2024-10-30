@@ -11,14 +11,18 @@ export class Light extends Phaser.GameObjects.Image implements ConnectionPartner
         scene.add.existing(this)
     }
 
+    reset() {
+        this.setOn(false)
+    }
+
     onClick() {
         return
     }
 
-    powerCanBeForwarded(power: boolean): boolean {
+    powerAvailableAfter(power: boolean): boolean {
         throw new Error("Method not implemented.");
     }
-    powerForwardCanBeChecked(): boolean {
+    powerForwardCanBeChecked(number: number): boolean {
         throw new Error("Method not implemented.");
     }
 

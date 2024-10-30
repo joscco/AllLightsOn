@@ -3,6 +3,7 @@ import {ConnectionPartner} from "../interfaces/ConnectionPartner";
 
 export class Switch extends Phaser.GameObjects.Image implements ConnectionPartner {
     private _isOn: boolean;
+    private anyPowerProvided: boolean = false;
 
     constructor(scene: Phaser.Scene, on: boolean) {
         super(scene, 0, 0, on ? 'switch_on' : 'switch_off');
@@ -10,11 +11,15 @@ export class Switch extends Phaser.GameObjects.Image implements ConnectionPartne
         scene.add.existing(this)
     }
 
-    powerCanBeForwarded(power: boolean): boolean {
-        return this.isOn() && power
+    reset() {
+        this.anyPowerProvided = false
     }
-    powerForwardCanBeChecked(): boolean {
-        throw new Error("Method not implemented.");
+
+    powerAvailableAfter(power: boolean): boolean {
+        return this.isOn() && this.anyPowerProvided
+    }
+    powerForwardCanBeChecked(numberOfLeftConnections: number): boolean {
+        return numberOfLeftConnections == 0 || this.anyPowerProvided
     }
 
     isLightBulb(): boolean {
@@ -37,7 +42,7 @@ export class Switch extends Phaser.GameObjects.Image implements ConnectionPartne
     }
 
     consume(power: boolean): void {
-        return
+        this.anyPowerProvided = power
     }
 
     setOn(value: boolean) {

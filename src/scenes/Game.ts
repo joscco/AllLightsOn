@@ -63,16 +63,18 @@ export default class GameScene extends Phaser.Scene {
             item.setInteractive({draggable: true})
 
             var itemTime = 0
-            var connection: Connection
+            var connection: Connection | undefined
             var itemPath: Vec2[];
 
             item.on('pointerdown', (pointer: Vector2) => {
-                if (this.getConnectionsForItem(item) < item.getMaxNumberOfConnections()) {
+                if (this.getConnectionsForItem(this.connections, item) < item.getMaxNumberOfConnections()) {
                     itemTime = this.time.now
                     connection = new Connection(this)
                     this.connectionLayer?.add(connection)
                     connection.setStart(item)
                     itemPath = [grid.getIndexForPosition(pointer)]
+                } else {
+                    console.log("Max connections reached!")
                 }
             })
 
@@ -89,8 +91,9 @@ export default class GameScene extends Phaser.Scene {
                     item.onClick()
                     this.checkSources()
                 } else if (connection) {
-                    if (connection.getStart() && connection.getEnd()) {
+                    if (connection.getStart() && connection.getEnd() && !this.connectionExists(connection)) {
                         this.connections.push(connection)
+                        connection = undefined
                         this.checkSources()
                     } else {
                         connection.destroy()
@@ -111,7 +114,7 @@ export default class GameScene extends Phaser.Scene {
         var itemAtIndex = grid.getItemAtIndex(indexForPointer)
         if (itemAtIndex
             && itemAtIndex != connection.getStart()
-            && this.getConnectionsForItem(itemAtIndex) < itemAtIndex.getMaxNumberOfConnections()) {
+            && this.getConnectionsForItem(this.connections, itemAtIndex) < itemAtIndex.getMaxNumberOfConnections()) {
             connection.setEnd(itemAtIndex)
         }
 
@@ -143,8 +146,8 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
-    private getConnectionsForItem(itemAtIndex: ConnectionPartner): number {
-        return this.connections
+    private getConnectionsForItem(connections: Connection[], itemAtIndex: ConnectionPartner): number {
+        return connections
             .filter(connection => connection.getEnd() == itemAtIndex || connection.getStart() == itemAtIndex)
             .length
     }
@@ -160,6 +163,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     checkSources() {
+        this.items.forEach(item => item.reset())
         this.connections.forEach(connection => connection.setInUse(false))
         for (let powerSource of this.items.filter(item => item.isSource())) {
             this.forwardPower(true, powerSource, this.connections);
@@ -171,6 +175,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     private forwardPower(power: boolean, source: ConnectionPartner, connections: Connection[]) {
+        // Also non powers have to be forwarded!
         var leftConnections = connections.filter(connection => !connection.isInUse())
         for (let connection of leftConnections) {
             if (connection.getStart() == source || connection.getEnd() == source) {
@@ -178,10 +183,19 @@ export default class GameScene extends Phaser.Scene {
                 let otherPartner = [connection.getEnd(), connection.getStart()].find(el => el != source)!
                 otherPartner.consume(power)
 
-                if (otherPartner.isForwarder()) {
-                    this.forwardPower(otherPartner.powerCanBeForwarded(power), otherPartner, leftConnections)
+                var numberOfLeftConnectionsToConsume = this.getConnectionsForItem(leftConnections, otherPartner) - 1
+
+                if (otherPartner.isForwarder() && otherPartner.powerForwardCanBeChecked(numberOfLeftConnectionsToConsume)) {
+                    this.forwardPower(otherPartner.powerAvailableAfter(power), otherPartner, leftConnections)
                 }
             }
         }
+    }
+
+    private connectionExists(connection: Connection) {
+        return this.connections
+            .filter(other => (other.getStart() == connection.getStart() && other.getEnd() == connection.getEnd())
+                || (other.getStart() == connection.getEnd() && other.getEnd() == connection.getStart()))
+            .length > 0
     }
 }
