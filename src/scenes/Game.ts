@@ -52,26 +52,21 @@ export default class GameScene extends Phaser.Scene {
         const power = new PowerSource(this);
 
         const switcher = new Switch(this, false);
-        switcher.setInteractive({draggable: true})
-
         const switcher2 = new Switch(this, false);
-        switcher2.setInteractive({draggable: true})
-
         const light = new Light(this, false);
         const light2 = new Light(this, false);
 
         this.itemLayer.add([power, switcher, switcher2, light, light2])
         this.items.push(power, switcher, switcher2, light, light2);
 
-
         this.items.forEach(item => {
+            item.setInteractive({draggable: true})
+
             var itemTime = 0
             var connection: Connection
             var itemPath: Vec2[];
 
-            console.log("Defining logic")
             item.on('pointerdown', (pointer: Vector2) => {
-                console.log(item, "Pointerdown")
                 itemTime = this.time.now
                 connection = new Connection(this)
                 this.connectionLayer?.add(connection)
@@ -161,14 +156,15 @@ export default class GameScene extends Phaser.Scene {
     }
 
     private forwardPower(power: boolean, source: ConnectionPartner, connections: Connection[]) {
-        for (let connection of connections.filter(connection => !connection.isInUse())) {
+        var leftConnections = connections.filter(connection => !connection.isInUse())
+        for (let connection of leftConnections) {
             if (connection.getStart() == source || connection.getEnd() == source) {
                 connection.setInUse(true)
                 let otherPartner = [connection.getEnd(), connection.getStart()].find(el => el != source)!
                 otherPartner.consume(power)
 
                 if (otherPartner.isForwarder()) {
-                    this.forwardPower(otherPartner.powerCanBeForwarded(power), otherPartner, connections)
+                    this.forwardPower(otherPartner.powerCanBeForwarded(power), otherPartner, leftConnections)
                 }
             }
         }

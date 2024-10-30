@@ -76,6 +76,6 @@ export class Connection extends Graphics {
     }
 
     setInUse(value: boolean) {
-        this.inUse = false
+        this.inUse = value
     }
 }
