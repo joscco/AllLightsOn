@@ -67,11 +67,13 @@ export default class GameScene extends Phaser.Scene {
             var itemPath: Vec2[];
 
             item.on('pointerdown', (pointer: Vector2) => {
-                itemTime = this.time.now
-                connection = new Connection(this)
-                this.connectionLayer?.add(connection)
-                connection.setStart(item)
-                itemPath = [grid.getIndexForPosition(pointer)]
+                if (this.getConnectionsForItem(item) < item.getMaxNumberOfConnections()) {
+                    itemTime = this.time.now
+                    connection = new Connection(this)
+                    this.connectionLayer?.add(connection)
+                    connection.setStart(item)
+                    itemPath = [grid.getIndexForPosition(pointer)]
+                }
             })
 
             item.on('drag', (pointer: Vector2) => {
@@ -85,6 +87,7 @@ export default class GameScene extends Phaser.Scene {
                 } else {
                     if (connection.getStart() && connection.getEnd()) {
                         this.connections.push(connection)
+                        this.checkSources()
                     } else {
                         connection.destroy()
                     }
@@ -102,7 +105,9 @@ export default class GameScene extends Phaser.Scene {
     private addPointToPath(grid: Grid, pointer: Phaser.Math.Vector2, switcherPath: Vec2[], connection: Connection) {
         var indexForPointer = grid.getIndexForPosition(pointer)
         var itemAtIndex = grid.getItemAtIndex(indexForPointer)
-        if (itemAtIndex && itemAtIndex != connection.getStart()) {
+        if (itemAtIndex
+            && itemAtIndex != connection.getStart()
+            && this.getConnectionsForItem(itemAtIndex) < itemAtIndex.getMaxNumberOfConnections()) {
             connection.setEnd(itemAtIndex)
         }
 
@@ -132,6 +137,12 @@ export default class GameScene extends Phaser.Scene {
             connection.setPath(switcherPath)
             connection.draw(grid);
         }
+    }
+
+    private getConnectionsForItem(itemAtIndex: ConnectionPartner): number {
+        return this.connections
+            .filter(connection => connection.getEnd() == itemAtIndex || connection.getStart() == itemAtIndex)
+            .length
     }
 
     private oneIntoDirectionOf(from: number, to: number) {
