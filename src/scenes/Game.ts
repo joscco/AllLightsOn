@@ -214,6 +214,7 @@ export default class GameScene extends Phaser.Scene {
     checkSources() {
         this.items.forEach(item => item.reset())
         this.connections.forEach(connection => connection.setDirectedWithPower(false))
+
         for (let powerSource of this.items.filter(item => item.isPowerSource())) {
             this.forwardPower(powerSource, this.connections);
         }
@@ -229,7 +230,8 @@ export default class GameScene extends Phaser.Scene {
         var leftUndirectedConnections = connections
             .filter(connection => !connection.isDirectedWithPower())
         for (let connection of leftUndirectedConnections) {
-            if (connection.hasPartner(source)) {
+            // if (connection.hasPartner(source)) { // This is undirected
+            if (connection.getStart() == source) {
                 let otherPartner = connection.getPartnerThatIsNot(source)
                 connection.setDirectedWithPower(true, source, otherPartner)
                 otherPartner.consume()
