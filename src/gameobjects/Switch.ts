@@ -3,7 +3,7 @@ import {ConnectionPartner} from "../interfaces/ConnectionPartner";
 
 export class Switch extends ConnectionPartner {
     private _isOn: boolean = false;
-    private anyPowerProvided: boolean = false;
+    // private anyPowerProvided: boolean = false;
 
     constructor(scene: Phaser.Scene, on: boolean) {
         super(scene, 'switch_on');
@@ -12,7 +12,7 @@ export class Switch extends ConnectionPartner {
     }
 
     reset() {
-        this.anyPowerProvided = false
+        // this.anyPowerProvided = false
     }
 
     getColWidth(): number {
@@ -23,12 +23,13 @@ export class Switch extends ConnectionPartner {
         return 4
     }
 
-    powerAvailableAfter(power: boolean): boolean {
-        return this.isOn() && this.anyPowerProvided
+    powerAvailableAfter(): boolean {
+        return this.isOn()
     }
 
     powerForwardCanBeChecked(numberOfLeftConnections: number): boolean {
-        return numberOfLeftConnections == 0 || this.anyPowerProvided
+        return true
+        // return numberOfLeftConnections == 0 || this.anyPowerProvided
     }
 
     isLightBulb(): boolean {
@@ -39,7 +40,7 @@ export class Switch extends ConnectionPartner {
         return 20
     }
 
-    isForwarder(): boolean {
+    isPowerForwarder(): boolean {
         return true
     }
 
@@ -47,12 +48,12 @@ export class Switch extends ConnectionPartner {
         this.setOn(!this.isOn())
     }
 
-    isSource(): boolean {
+    isPowerSource(): boolean {
         return false
     }
 
-    consume(power: boolean): void {
-        this.anyPowerProvided ||= power
+    consume(): void {
+        return
     }
 
     setOn(value: boolean) {

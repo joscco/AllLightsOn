@@ -22,7 +22,7 @@ export class Toggle extends ConnectionPartner {
         return 4
     }
 
-    powerAvailableAfter(power: boolean): boolean {
+    powerAvailableAfter(): boolean {
         return this.isOn()
     }
 
@@ -38,7 +38,7 @@ export class Toggle extends ConnectionPartner {
         return 20
     }
 
-    isForwarder(): boolean {
+    isPowerForwarder(): boolean {
         return true
     }
 
@@ -46,14 +46,12 @@ export class Toggle extends ConnectionPartner {
         return
     }
 
-    isSource(): boolean {
+    isPowerSource(): boolean {
         return false
     }
 
-    consume(power: boolean): void {
-        if (power) {
-            this.setOn(!this.isOn())
-        }
+    consume(): void {
+        this.setOn(!this.isOn())
     }
 
     setOn(value: boolean) {

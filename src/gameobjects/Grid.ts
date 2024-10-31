@@ -1,6 +1,6 @@
 import Graphics = Phaser.GameObjects.Graphics;
 import {Scene} from "phaser";
-import {Vec2, Vector2Dict,} from "../Helpers/Dict";
+import {Vec2, vec2Mean, Vector2Dict,} from "../Helpers/Dict";
 import {ConnectionPartner} from "../interfaces/ConnectionPartner";
 
 export class Grid extends Graphics {
@@ -43,6 +43,16 @@ export class Grid extends Graphics {
         this.updateGridRender()
         this.freeFieldGraphics.setAlpha(0)
         this.usedFieldGraphics.setAlpha(0)
+    }
+
+    calculatePosPathFromIndices(indexPath: Vec2[]): Vec2[] {
+        var pathsWithBetweens: Vec2[] = []
+        for (let i = 0; i < indexPath.length - 1; i++) {
+            pathsWithBetweens.push(indexPath[i], vec2Mean(indexPath[i], indexPath[i + 1]))
+        }
+        pathsWithBetweens.push(indexPath.at(-1)!)
+
+        return pathsWithBetweens.map(index => this.getPositionForIndex(index))
     }
 
     addAtIndex(index: Vec2, item: ConnectionPartner) {

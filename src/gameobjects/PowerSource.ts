@@ -28,11 +28,11 @@ export class PowerSource extends ConnectionPartner {
         return 10
     }
 
-    isForwarder(): boolean {
+    isPowerForwarder(): boolean {
         return false;
     }
 
-    powerAvailableAfter(power: boolean): boolean {
+    powerAvailableAfter(): boolean {
         return true
     }
 
@@ -40,7 +40,7 @@ export class PowerSource extends ConnectionPartner {
         return true
     }
 
-    isSource(): boolean {
+    isPowerSource(): boolean {
         return true;
     }
 
@@ -48,7 +48,7 @@ export class PowerSource extends ConnectionPartner {
         return
     }
 
-    consume(power: boolean): void {
+    consume(): void {
         return
     }
 }

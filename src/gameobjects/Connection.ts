@@ -1,7 +1,6 @@
 import Phaser from "phaser";
-import {Vec2, vec2Mean} from "../Helpers/Dict";
+import {Vec2} from "../Helpers/Dict";
 import {ConnectionPartner} from "../interfaces/ConnectionPartner";
-import {Grid} from "./Grid";
 import Graphics = Phaser.GameObjects.Graphics;
 import QuadraticBezier = Phaser.Curves.QuadraticBezier;
 import Line = Phaser.Curves.Line;
@@ -9,23 +8,17 @@ import Vector2 = Phaser.Math.Vector2;
 import Path = Phaser.Curves.Path;
 
 export class Connection extends Graphics {
-    private indexPath: Vec2[] = []
+    private posPath: Vec2[] = []
     private start?: ConnectionPartner
     private end?: ConnectionPartner
-    private inUse: boolean = false
+    private supplier?: ConnectionPartner
+    private consumer?: ConnectionPartner
+    private directedWithPower: boolean = false
 
     constructor(scene: Phaser.Scene) {
-        super(scene, {
-            lineStyle: {
-                width: 7
-            }
-        })
-        this.alpha = 0.5
+        super(scene)
         scene.add.existing(this)
-    }
-
-    isInUse(): boolean {
-        return this.inUse;
+        this.setDirectedWithPower(false)
     }
 
     getStart(): ConnectionPartner | undefined {
@@ -44,27 +37,44 @@ export class Connection extends Graphics {
         this.end = end
     }
 
-    setPath(path: Vec2[]) {
-        this.indexPath = path
+    resetEnd() {
+        this.end = undefined
     }
 
-    draw(grid: Grid) {
-        // Drawing Path
+    isDirectedWithPower(): boolean {
+        return this.directedWithPower;
+    }
 
-        var pathsWithBetweens: Vec2[] = []
-        for (let i = 0; i < this.indexPath.length - 1; i++) {
-            pathsWithBetweens.push(this.indexPath[i], vec2Mean(this.indexPath[i], this.indexPath[i + 1]))
-        }
-        pathsWithBetweens.push(this.indexPath.at(-1)!)
+    checkDirection(from: ConnectionPartner, to: ConnectionPartner) {
+        return this.supplier == from && this.consumer == to
+    }
 
-        var switcherPositionPath = pathsWithBetweens.map(index => grid.getPositionForIndex(index))
+    setDirectedWithPower(val: boolean, from?: ConnectionPartner, to?: ConnectionPartner) {
+        this.directedWithPower = val
+        this.supplier = from
+        this.consumer = to
+        this.draw()
+    }
 
+    setPath(path: Vec2[]) {
+        this.posPath = path
+    }
+
+    draw() {
+        // Clearing path
         this.clear()
+        // Setting color
+        if (this.isDirectedWithPower()) {
+            this.lineStyle(7, 0xffffff)
+        } else{
+            this.lineStyle(7, 0x1b3953)
+        }
+        // Redrawing path
         var path = new Path();
-        for (let i = 0; i < switcherPositionPath.length - 1; i++) {
-            var first = switcherPositionPath[i]
-            var second = switcherPositionPath[i + 1]
-            var third = switcherPositionPath[i + 2]
+        for (let i = 0; i < this.posPath.length - 1; i++) {
+            var first = this.posPath[i]
+            var second = this.posPath[i + 1]
+            var third = this.posPath[i + 2]
 
             if (third && first.x != third.x && first.y != third.y) {
                 path.add(new QuadraticBezier(new Vector2(first.x, first.y), new Vector2(second.x, second.y), new Vector2(third.x, third.y)))
@@ -74,13 +84,34 @@ export class Connection extends Graphics {
             }
         }
         path.draw(this)
+
+        // Add endpoints
+        if (this.posPath.length > 1) {
+            let start = this.posPath[0]
+            let last = this.posPath.at(-1)!
+
+            if (this.isDirectedWithPower()) {
+                // Start in red and end in green
+                let startToEndDirection = this.getStart() == this.supplier
+                this.fillStyle(startToEndDirection ? 0xff0000 : 0x00ff00)
+                this.fillCircle(start.x, start.y, 7)
+                this.fillStyle(startToEndDirection ? 0x00ff00: 0xff0000)
+                this.fillCircle(last.x, last.y, 7)
+
+            } else {
+                // just put normal points
+                this.fillStyle(0x1b3953)
+                this.fillCircle(start.x, start.y, 7)
+                this.fillCircle(last.x, last.y, 7)
+            }
+        }
     }
 
-    setInUse(value: boolean) {
-        this.inUse = value
+    getPartnerThatIsNot(unwanted: ConnectionPartner) {
+        return [this.getEnd(), this.getStart()].find(el => el != unwanted)!
     }
 
-    resetEnd() {
-        this.end = undefined
+    hasPartner(source: ConnectionPartner) {
+        return this.getEnd() == source || this.getStart() == source
     }
 }

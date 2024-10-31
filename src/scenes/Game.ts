@@ -48,9 +48,9 @@ export default class GameScene extends Phaser.Scene {
         gridLayer.setDepth(0)
 
         this.connectionLayer = this.add.layer()
-        this.connectionLayer.setDepth(1)
+        this.connectionLayer.setDepth(2)
         this.itemLayer = this.add.layer()
-        this.itemLayer.setDepth(2)
+        this.itemLayer.setDepth(1)
 
         const power = new PowerSource(this);
         const power2 = new PowerSource(this);
@@ -64,7 +64,7 @@ export default class GameScene extends Phaser.Scene {
         this.itemLayer.add([power, power2, switcher, switcher2, light, light2, light3, toggle])
         this.items.push(power, power2, switcher, switcher2, light, light2, light3, toggle);
 
-        var dragContainer = this.add.rectangle(GAME_WIDTH/2, GAME_HEIGHT/2, GAME_WIDTH, GAME_HEIGHT, 0xffffff, 0)
+        var dragContainer = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0xffffff, 0)
         dragContainer.setInteractive()
         this.defineItemLogic(this.grid);
 
@@ -133,8 +133,9 @@ export default class GameScene extends Phaser.Scene {
                     connection.resetEnd()
                 }
 
-                connection.setPath(itemPath)
-                connection.draw(this.grid!);
+                var posPath = this.grid!.calculatePosPathFromIndices(itemPath)
+                connection.setPath(posPath)
+                connection.draw();
             }
         })
 
@@ -212,9 +213,9 @@ export default class GameScene extends Phaser.Scene {
 
     checkSources() {
         this.items.forEach(item => item.reset())
-        this.connections.forEach(connection => connection.setInUse(false))
-        for (let powerSource of this.items.filter(item => item.isSource())) {
-            this.forwardPower(true, powerSource, this.connections);
+        this.connections.forEach(connection => connection.setDirectedWithPower(false))
+        for (let powerSource of this.items.filter(item => item.isPowerSource())) {
+            this.forwardPower(powerSource, this.connections);
         }
 
         if (this.items.filter(item => item.isLightBulb()).every(bulb => (bulb as Light).isOn())) {
@@ -223,42 +224,40 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
-    private forwardPower(power: boolean, source: ConnectionPartner, connections: Connection[]) {
+    private forwardPower(source: ConnectionPartner, connections: Connection[]) {
         // Also non powers have to be forwarded!
-        var leftConnections = connections.filter(connection => !connection.isInUse())
-        for (let connection of leftConnections) {
-
-            if (connection.getStart() == source || connection.getEnd() == source) {
-                connection.alpha = 0.5
-                if (power) {
-                    connection.alpha = 1
-                }
-
-                let otherPartner = [connection.getEnd(), connection.getStart()].find(el => el != source)!
-                connection.setInUse(true)
-                otherPartner.consume(power)
+        var leftUndirectedConnections = connections
+            .filter(connection => !connection.isDirectedWithPower())
+        for (let connection of leftUndirectedConnections) {
+            if (connection.hasPartner(source)) {
+                let otherPartner = connection.getPartnerThatIsNot(source)
+                connection.setDirectedWithPower(true, source, otherPartner)
+                otherPartner.consume()
 
                 // Here are only those relevant that can provide energy!
-                var leftIncomingConnections = this.getConnectionsForItem(leftConnections, otherPartner)
-                    .map(connection => [connection.getStart(), connection.getEnd()].filter(partner => partner != otherPartner)[0]!)
-                    .filter(item => item.isSource() || item.isForwarder())
-                var numberOfLeftIncomingConnections = leftIncomingConnections.length - 1
+                // var leftIncomingUndirectedConnectionsToOther = this.getConnectionsForItem(leftUndirectedConnections, otherPartner)
+                //     .map(connection => connection.getPartnerThatIsNot(otherPartner))
+                //     .filter(item => item.isPowerSource() || item.isPowerForwarder())
+                // var numberOfLeftIncomingConnections = leftIncomingUndirectedConnectionsToOther.length - 1
 
-                if (otherPartner.isForwarder() && otherPartner.powerForwardCanBeChecked(numberOfLeftIncomingConnections)) {
-                    this.forwardPower(otherPartner.powerAvailableAfter(power), otherPartner, leftConnections)
+                if (otherPartner.isPowerForwarder()) { // && otherPartner.powerForwardCanBeChecked(numberOfLeftIncomingConnections)) {
+                    var powerProvidedAfter = otherPartner.powerAvailableAfter()
+                    if (powerProvidedAfter) {
+                        this.forwardPower(otherPartner, leftUndirectedConnections)
+                    }
                 }
             }
         }
     }
 
-    private connectionExists(connection : Connection) {
+    private connectionExists(connection: Connection) {
         return this.connections
             .filter(other => (other.getStart() == connection.getStart() && other.getEnd() == connection.getEnd())
                 || (other.getStart() == connection.getEnd() && other.getEnd() == connection.getStart()))
             .length > 0
     }
 
-    private  oneIntoDirectionOf(from: number, to: number) {
+    private oneIntoDirectionOf(from: number, to: number) {
         if (from < to) {
             return from + 1
         }

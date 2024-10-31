@@ -16,19 +16,20 @@ export abstract class ConnectionPartner extends Image {
     // Electricity stuff
     abstract reset(): void
 
-    abstract consume(power: boolean): void;
+    // Consume power
+    abstract consume(): void;
 
     abstract getMaxNumberOfConnections(): number
 
     // Can this partner generally forward power?
-    abstract isForwarder(): boolean
+    abstract isPowerForwarder(): boolean
 
-    abstract isSource(): boolean
+    abstract isPowerSource(): boolean
 
     abstract isLightBulb(): boolean
 
     // Can this partner forward now if power is available
-    abstract powerAvailableAfter(power: boolean): boolean;
+    abstract powerAvailableAfter(): boolean;
 
     // Can this partners forwarding be checked now?
     abstract powerForwardCanBeChecked(numberOfLeftConnections: number): boolean;

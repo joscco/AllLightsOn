@@ -25,7 +25,7 @@ export class Light extends  ConnectionPartner {
         return
     }
 
-    powerAvailableAfter(power: boolean): boolean {
+    powerAvailableAfter(): boolean {
         throw new Error("Method not implemented.");
     }
     powerForwardCanBeChecked(number: number): boolean {
@@ -39,10 +39,10 @@ export class Light extends  ConnectionPartner {
     getMaxNumberOfConnections(): number {
         return 1
     }
-    isForwarder(): boolean {
+    isPowerForwarder(): boolean {
         return false
     }
-    isSource(): boolean {
+    isPowerSource(): boolean {
         return false
     }
 
@@ -58,7 +58,7 @@ export class Light extends  ConnectionPartner {
         return this._isOn ?? false;
     }
 
-    consume(power: boolean): void {
-        this.setOn(power);
+    consume(): void {
+        this.setOn(true);
     }
 }
