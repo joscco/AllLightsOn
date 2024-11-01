@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import {Vec2} from "../Helpers/Dict";
+import {Vec2, vec2Mean} from "../Helpers/Dict";
 import {ConnectionPartner, GameColors} from "../interfaces/ConnectionPartner";
 import Graphics = Phaser.GameObjects.Graphics;
 import QuadraticBezier = Phaser.Curves.QuadraticBezier;
@@ -18,7 +18,7 @@ export class Connection extends Graphics {
     private showingElectrons: boolean = false
     private lastElectronIndex: number = 0
     private electronGraphics: Graphics
-    private electronMsPerNode = 100;
+    private electronMsPerNode = 50;
     private lastElectronChange: number
 
     constructor(scene: Phaser.Scene) {
@@ -32,8 +32,6 @@ export class Connection extends Graphics {
             }
         })
         this.electronGraphics.setDepth(3)
-
-        setInterval(() => this.update(), 50)
     }
 
     getStart(): ConnectionPartner | undefined {
@@ -79,11 +77,11 @@ export class Connection extends Graphics {
         // Clearing path
         this.clear()
         // Setting color
-        // if (this.isDirectedWithPower()) {
-        //     this.lineStyle(7, GameColors.LIGHT)
-        // } else{
+        if (this.isDirectedWithPower()) {
+            this.lineStyle(7, GameColors.ORANGE)
+        } else{
             this.lineStyle(7, GameColors.DARK_BLUE)
-        // }
+        }
         // Redrawing path
         var path = new Path();
         for (let i = 0; i < this.posPath.length - 1; i++) {
@@ -131,12 +129,24 @@ export class Connection extends Graphics {
         return this.getEnd() == source || this.getStart() == source
     }
 
-    update() {
-        if (this.showingElectrons && this.scene.time.now > this.lastElectronChange + this.electronMsPerNode) {
+    update(now: number) {
+        if (this.showingElectrons && now > this.lastElectronChange + this.electronMsPerNode) {
+            this.lastElectronChange = now
             this.electronGraphics.clear()
+
+            var currentPosition = this.posPath[this.lastElectronIndex]
+            var secondNextPosition = this.posPath[this.lastElectronIndex + 2]
             this.lastElectronIndex = (this.lastElectronIndex + 1) % this.posPath.length
-            var newPos = this.posPath.at(this.lastElectronIndex) ?? this.posPath[0]!
-            this.electronGraphics.fillCircle(newPos.x, newPos.y, 5)
+            var nextPosition = this.posPath.at(this.lastElectronIndex)!
+            let newPos: Vec2
+            if (secondNextPosition && (currentPosition.x != secondNextPosition.x) && (currentPosition.y != secondNextPosition.y)) {
+                // Next is corner, align it correctly to fit the bezier
+                newPos = vec2Mean(nextPosition, vec2Mean(currentPosition, secondNextPosition))
+            } else {
+                newPos = nextPosition
+            }
+
+            this.electronGraphics.fillCircle(newPos.x, newPos.y, 6)
         }
     }
 }

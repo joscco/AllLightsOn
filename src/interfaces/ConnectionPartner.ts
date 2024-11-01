@@ -28,11 +28,12 @@ export abstract class ConnectionPartner extends Container {
     constructor(scene: Scene, texture: string, gridUnitSize: number) {
         super(scene, 0, 0);
         // Slight offset to top because of the bottom border
-        this.sprite = scene.add.image(0, -5, texture)
+        this.sprite = scene.add.image(0, -3, texture)
         var baseTexture = this.getBaseTexture()
-        var width = gridUnitSize * (this.getColWidth())
+        // Little less size to make it quadratic with bottom
+        var width = gridUnitSize * (this.getColWidth()) - 5
         var height = gridUnitSize * (this.getRowHeight())
-        this.base = scene.add.nineslice(0, 0, baseTexture, 0, width, height, 25, 25, 25, 25)
+        this.base = scene.add.nineslice(0, 5, baseTexture, 0, width, height, 25, 25, 25, 25)
         this.add([this.base, this.sprite])
     }
 

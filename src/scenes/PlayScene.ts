@@ -4,7 +4,7 @@ import {PowerSource} from "../gameobjects/PowerSource";
 import {Switch} from "../gameobjects/Switch";
 import {GAME_HEIGHT, GAME_WIDTH} from "../config";
 import {Grid} from "../gameobjects/Grid";
-import {Vec2, vec2Equals} from "../Helpers/Dict";
+import {Vec2, vec2Copy, vec2Equals} from "../Helpers/Dict";
 import {Connection} from "../gameobjects/Connection";
 import {ConnectionPartner} from "../interfaces/ConnectionPartner";
 import {Toggle} from "../gameobjects/Toggle";
@@ -12,7 +12,7 @@ import Vector2 = Phaser.Math.Vector2;
 import Layer = Phaser.GameObjects.Layer;
 
 
-export default class GameScene extends Phaser.Scene {
+export default class PlayScene extends Phaser.Scene {
     private items: ConnectionPartner[]
     private connections: Connection[];
     private connectionLayer?: Layer;
@@ -20,22 +20,9 @@ export default class GameScene extends Phaser.Scene {
     private grid?: Grid
 
     constructor() {
-        super('GameScene');
+        super({key: 'PlayScene'});
         this.items = [];
         this.connections = [];
-    }
-
-    preload() {
-        this.load.image('base_orange', 'assets/Item_Back_Orange.png');
-        this.load.image('base_blue', 'assets/Item_Back_Blue.png');
-        this.load.image('light_off', 'assets/Light_Off.png');
-        this.load.image('light_on', 'assets/Light_On.png');
-        this.load.image('power_off', 'assets/Energy_Source_Off.png');
-        this.load.image('power_on', 'assets/Energy_Source_On.png');
-        this.load.image('switch_off', 'assets/Switch_Off.png');
-        this.load.image('switch_on', 'assets/Switch_On.png');
-        this.load.image('toggle_off', 'assets/Toggler_Off.png');
-        this.load.image('toggle_on', 'assets/Toggler_On.png');
     }
 
     create() {
@@ -46,7 +33,7 @@ export default class GameScene extends Phaser.Scene {
             24, 16,
             GRID_UNIT_SIZE, GRID_UNIT_SIZE)
         this.grid.showGrid()
-        var gridLayer = this.add.layer(this.grid)
+        let gridLayer = this.add.layer(this.grid)
         gridLayer.setDepth(0)
 
         this.connectionLayer = this.add.layer()
@@ -66,7 +53,7 @@ export default class GameScene extends Phaser.Scene {
         this.itemLayer.add([power, power2, switcher, switcher2, light, light2, light3, toggle])
         this.items.push(power, power2, switcher, switcher2, light, light2, light3, toggle);
 
-        var dragContainer = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0xffffff, 0)
+        let dragContainer = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0xffffff, 0)
         dragContainer.setInteractive()
         this.defineItemLogic(this.grid);
 
@@ -74,23 +61,27 @@ export default class GameScene extends Phaser.Scene {
         this.grid.addAtIndex({x: -10, y: -5}, power)
         this.grid.addAtIndex({x: -10, y: 5}, power2)
         this.grid.addAtIndex({x: 0, y: -5}, switcher)
-        this.grid.addAtIndex({x: 0, y: 5}, switcher2)
+        this.grid.addAtIndex({x: 0, y: -2}, switcher2)
         this.grid.addAtIndex({x: 7, y: -5}, light)
         this.grid.addAtIndex({x: 7, y: 0}, light2)
         this.grid.addAtIndex({x: 7, y: 5}, light3)
     }
 
+    update(time: number, delta: number) {
+        this.connections.forEach(con => con.update(time))
+    }
+
     private defineItemLogic(grid: Grid) {
-        var dragTime = 0
-        var connection: Connection | undefined
-        var itemPath: Vec2[];
-        var pressed: boolean = false
+        let dragTime = 0
+        let connection: Connection | undefined
+        let itemPath: Vec2[];
+        let pressed: boolean = false
 
         this.input.on('pointerdown', (pointer: Vector2) => {
             pressed = true
-            var item = this.grid?.getItemAtIndex(this.grid?.getIndexForPosition(pointer))
+            let item = this.grid?.getItemAtIndex(this.grid?.getIndexForPosition(pointer))
             if (item) {
-                var currentConnectionsForItem = this.getConnectionsForItem(this.connections, item)
+                let currentConnectionsForItem = this.getConnectionsForItem(this.connections, item)
                 if (currentConnectionsForItem.length < item.getMaxNumberOfConnections()) {
                     dragTime = this.time.now
                     connection = new Connection(this)
@@ -106,36 +97,37 @@ export default class GameScene extends Phaser.Scene {
 
         this.input.on('pointermove', (pointer: Vector2) => {
             if (pressed && connection) {
-                var indexForPointer = grid.getIndexForPosition(pointer)
-                var itemAtIndex = grid.getItemAtIndex(indexForPointer)
-                itemPath = this.addPointToPath(indexForPointer, itemAtIndex, itemPath, connection);
-                var findStartIndex = itemPath.slice().reverse().findIndex(index => {
-                    var item = this.grid?.getItemAtIndex(index);
+                let indexForPointer = grid.getIndexForPosition(pointer)
+
+                // Calculate path without checking
+                itemPath = this.addPointToPath(indexForPointer, itemPath, connection);
+                let findStartIndex = itemPath.slice().reverse().findIndex(index => {
+                    let item = this.grid?.getItemAtIndex(index);
                     return item && item == connection!.getStart()
                 })
-                itemPath = itemPath.slice(itemPath.length - 1 - findStartIndex)
 
-                var firstEndIndex = itemPath.findIndex(index => {
-                    var item = this.grid?.getItemAtIndex(index);
+                itemPath = itemPath.slice(itemPath.length - 1 - findStartIndex)
+                let firstEndIndex = itemPath.findIndex(index => {
+                    let item = this.grid?.getItemAtIndex(index);
                     return item && item != connection!.getStart()
                 })
 
                 if (firstEndIndex > -1) {
-                    var itemAtEnd = this.grid?.getItemAtIndex(itemPath.at(firstEndIndex)!)!
+                    let itemAtEnd = this.grid?.getItemAtIndex(itemPath.at(firstEndIndex)!)!
                     itemPath = itemPath.slice(0, firstEndIndex + 1)
                     connection.setEnd(itemAtEnd)
-                    var itemConnections = this.getConnectionsForItem(this.connections, itemAtEnd)
+                    let itemConnections = this.getConnectionsForItem(this.connections, itemAtEnd)
                     if (itemConnections.length < itemAtEnd.getMaxNumberOfConnections()) {
-                        connection.setEnd(itemAtIndex)
+                        connection.setEnd(itemAtEnd)
                     } else {
-                        itemAtIndex?.wiggle()
+                        itemAtEnd?.wiggle()
                         connection.resetEnd()
                     }
                 } else {
                     connection.resetEnd()
                 }
 
-                var posPath = this.grid!.calculatePosPathFromIndices(itemPath)
+                let posPath = this.grid!.calculatePosPathFromIndices(itemPath)
                 connection.setPath(posPath)
                 connection.draw();
             }
@@ -143,7 +135,7 @@ export default class GameScene extends Phaser.Scene {
 
         this.input.on('pointerup', (pointer: Vector2) => {
             pressed = false
-            var item = this.grid?.getItemAtIndex(this.grid?.getIndexForPosition(pointer))
+            let item = this.grid?.getItemAtIndex(this.grid?.getIndexForPosition(pointer))
             if (item && this.time.now - dragTime < 300) {
                 item.onClick()
                 this.checkSources()
@@ -161,50 +153,55 @@ export default class GameScene extends Phaser.Scene {
 
     private addPointToPath(
         indexForPointer: Vec2,
-        itemAtIndex: ConnectionPartner | undefined,
         switcherPath: Vec2[],
         connection: Connection): Vec2[] {
-        var previousOccurrenceInPath = switcherPath.findIndex(index => vec2Equals(index, indexForPointer))
+        let previousOccurrenceInPath = switcherPath.findIndex(index => vec2Equals(index, indexForPointer))
         if (previousOccurrenceInPath > -1) {
-            if (previousOccurrenceInPath == switcherPath.length - 1) {
-                // Last occurence is last index, so nothing to do
-            } else {
-                // Reset
+            if (previousOccurrenceInPath != switcherPath.length - 1) {
+                // if last occurence was last index, there would be nothing to do
+                // otherwise reset path to last occurence
                 switcherPath = switcherPath.slice(0, Math.max(previousOccurrenceInPath + 1, 1))
             }
         } else {
             // Add new point
-            var lastIndex = switcherPath.at(-1)!
-            if (!connection.getEnd() || (itemAtIndex == connection.getEnd())) {
+            let lastIndex = switcherPath.at(-1)!
+            if (!connection.getEnd()) {
                 if (Math.abs(indexForPointer.x - lastIndex.x) + Math.abs(indexForPointer.y - lastIndex.y) == 1) {
                     switcherPath.push(indexForPointer)
                 } else {
-                    // Add easiest path
-                    var curX = lastIndex.x
-                    var curY = lastIndex.y
-                    while (curX != indexForPointer.x) {
-                        curX = this.oneIntoDirectionOf(curX, indexForPointer.x)
-                        var newIndex = {x: curX, y: curY}
-                        var duplicateIndex = switcherPath.findIndex(index => vec2Equals(index, newIndex))
-                        if (duplicateIndex > -1) {
-                            switcherPath = switcherPath.slice(0, duplicateIndex)
-                        }
-                        switcherPath.push(newIndex)
-                    }
-                    while (curY != indexForPointer.y) {
-                        curY = this.oneIntoDirectionOf(curY, indexForPointer.y)
-                        var newIndex = {x: curX, y: curY}
-                        var duplicateIndex = switcherPath.findIndex(index => vec2Equals(index, newIndex))
-                        if (duplicateIndex > -1) {
-                            switcherPath = switcherPath.slice(0, duplicateIndex)
-                        }
-                        switcherPath.push(newIndex)
-                    }
+                    // Add trivial connection path
+                    switcherPath = this.calculateLinkingPath(switcherPath, indexForPointer)
                 }
             }
         }
 
         return switcherPath
+    }
+
+    calculateLinkingPath(previousPath: Vec2[], end: Vec2): Vec2[] {
+        let result: Vec2[] = previousPath.map(vec2Copy)
+        let start = previousPath.at(-1)!
+        let curX = start.x
+        let curY = start.y
+        while (curX != end.x) {
+            curX = this.oneIntoDirectionOf(curX, end.x)
+            let newIndex = {x: curX, y: curY}
+            let duplicateIndex = result.findIndex(index => vec2Equals(index, newIndex))
+            if (duplicateIndex > -1) {
+                result = result.slice(0, duplicateIndex)
+            }
+            result.push(newIndex)
+        }
+        while (curY != end.y) {
+            curY = this.oneIntoDirectionOf(curY, end.y)
+            let newIndex = {x: curX, y: curY}
+            let duplicateIndex = result.findIndex(index => vec2Equals(index, newIndex))
+            if (duplicateIndex > -1) {
+                result = result.slice(0, duplicateIndex)
+            }
+            result.push(newIndex)
+        }
+        return result
     }
 
     private getConnectionsForItem(connections: Connection[], itemAtIndex: ConnectionPartner): Connection[] {
@@ -229,7 +226,7 @@ export default class GameScene extends Phaser.Scene {
 
     private forwardPower(source: ConnectionPartner, connections: Connection[]) {
         // Also non powers have to be forwarded!
-        var leftUndirectedConnections = connections
+        let leftUndirectedConnections = connections
             .filter(connection => !connection.isDirectedWithPower())
         for (let connection of leftUndirectedConnections) {
             // if (connection.hasPartner(source)) { // This is undirected
@@ -238,14 +235,15 @@ export default class GameScene extends Phaser.Scene {
                 connection.setDirectedWithPower(true, source, otherPartner)
                 otherPartner.consume()
 
+                // We need to check here how much power is supplied
                 // Here are only those relevant that can provide energy!
-                // var leftIncomingUndirectedConnectionsToOther = this.getConnectionsForItem(leftUndirectedConnections, otherPartner)
+                // let leftIncomingUndirectedConnectionsToOther = this.getConnectionsForItem(leftUndirectedConnections, otherPartner)
                 //     .map(connection => connection.getPartnerThatIsNot(otherPartner))
                 //     .filter(item => item.isPowerSource() || item.isPowerForwarder())
-                // var numberOfLeftIncomingConnections = leftIncomingUndirectedConnectionsToOther.length - 1
+                // let numberOfLeftIncomingConnections = leftIncomingUndirectedConnectionsToOther.length - 1
 
                 if (otherPartner.isPowerForwarder()) { // && otherPartner.powerForwardCanBeChecked(numberOfLeftIncomingConnections)) {
-                    var powerProvidedAfter = otherPartner.powerAvailableAfter()
+                    let powerProvidedAfter = otherPartner.powerAvailableAfter()
                     if (powerProvidedAfter) {
                         this.forwardPower(otherPartner, leftUndirectedConnections)
                     }

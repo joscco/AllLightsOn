@@ -79,6 +79,10 @@ export function vec2Mean(a: Vec2, b: Vec2) {
     return {x: (a.x + b.x)/2, y: (a.y + b.y)/2}
 }
 
+export function vec2Copy(v: Vec2) {
+    return {x: v.x, y: v.y}
+}
+
 export class Vector2Dict<V> extends Dict<Vec2, V> {
     constructor(entries?: Iterable<[Vec2, V]>) {
         super(v => "" + v.x + "," + v.y, entries);
