@@ -1,13 +1,17 @@
 import Phaser from "phaser";
-import {ConnectionPartner} from "../interfaces/ConnectionPartner";
+import {ConnectionPartner, GameBaseColor} from "../interfaces/ConnectionPartner";
 
-export class Light extends  ConnectionPartner {
+export class Light extends ConnectionPartner {
     private _isOn?: boolean;
-    constructor(scene: Phaser.Scene, on: boolean) {
-        super(scene, 'light_off');
-        this.setOrigin(0.5, 0.7)
+    constructor(scene: Phaser.Scene, on: boolean, gridUnitSize: number) {
+        super(scene, 'light_off', gridUnitSize);
+        this.sprite.setOrigin(0.5, 0.7)
         this.setOn(on)
         scene.add.existing(this)
+    }
+
+    getBaseColor(): GameBaseColor {
+        return GameBaseColor.BLUE
     }
 
     reset() {
@@ -15,10 +19,10 @@ export class Light extends  ConnectionPartner {
     }
 
     getColWidth(): number {
-        return 3
+        return 2
     }
-    getRowWidth(): number {
-        return 4
+    getRowHeight(): number {
+        return 3
     }
 
     onClick() {
@@ -48,7 +52,7 @@ export class Light extends  ConnectionPartner {
 
     private setOn(value: boolean) {
         this._isOn = value;
-        this.setTexture(this._isOn
+        this.sprite.setTexture(this._isOn
             ? 'light_on'
             : 'light_off');
 

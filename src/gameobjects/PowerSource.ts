@@ -1,19 +1,22 @@
 import Phaser from "phaser";
-import {ConnectionPartner} from "../interfaces/ConnectionPartner";
+import {ConnectionPartner, GameBaseColor} from "../interfaces/ConnectionPartner";
 
 export class PowerSource extends ConnectionPartner {
-
-    constructor(scene: Phaser.Scene) {
-        super(scene, 'power_on');
+    constructor(scene: Phaser.Scene, gridUnitSize: number) {
+        super(scene, 'power_on', gridUnitSize);
         scene.add.existing(this)
     }
 
-    getColWidth(): number {
-        return 4
+    getBaseColor(): GameBaseColor {
+        return GameBaseColor.BLUE
     }
 
-    getRowWidth(): number {
-        return 4
+    getColWidth(): number {
+        return 3
+    }
+
+    getRowHeight(): number {
+        return 3
     }
 
     reset() {

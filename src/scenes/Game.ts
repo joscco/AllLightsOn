@@ -26,23 +26,25 @@ export default class GameScene extends Phaser.Scene {
     }
 
     preload() {
+        this.load.image('base_orange', 'assets/Item_Back_Orange.png');
+        this.load.image('base_blue', 'assets/Item_Back_Blue.png');
         this.load.image('light_off', 'assets/Light_Off.png');
         this.load.image('light_on', 'assets/Light_On.png');
         this.load.image('power_off', 'assets/Energy_Source_Off.png');
         this.load.image('power_on', 'assets/Energy_Source_On.png');
         this.load.image('switch_off', 'assets/Switch_Off.png');
         this.load.image('switch_on', 'assets/Switch_On.png');
-        this.load.image('toggle_off', 'assets/Changer_Off.png');
-        this.load.image('toggle_on', 'assets/Changer_On.png');
+        this.load.image('toggle_off', 'assets/Toggler_Off.png');
+        this.load.image('toggle_on', 'assets/Toggler_On.png');
     }
 
     create() {
-        const grid_unit = 40;
+        const GRID_UNIT_SIZE = 40;
         this.grid = new Grid(
             this,
             GAME_WIDTH / 2, GAME_HEIGHT / 2,
-            30, 20,
-            grid_unit, grid_unit)
+            24, 16,
+            GRID_UNIT_SIZE, GRID_UNIT_SIZE)
         this.grid.showGrid()
         var gridLayer = this.add.layer(this.grid)
         gridLayer.setDepth(0)
@@ -52,14 +54,14 @@ export default class GameScene extends Phaser.Scene {
         this.itemLayer = this.add.layer()
         this.itemLayer.setDepth(1)
 
-        const power = new PowerSource(this);
-        const power2 = new PowerSource(this);
-        const switcher = new Switch(this, false);
-        const switcher2 = new Switch(this, false);
-        const light = new Light(this, false);
-        const light2 = new Light(this, false);
-        const light3 = new Light(this, false);
-        const toggle = new Toggle(this, false)
+        const power = new PowerSource(this, GRID_UNIT_SIZE);
+        const power2 = new PowerSource(this, GRID_UNIT_SIZE);
+        const switcher = new Switch(this, false, GRID_UNIT_SIZE);
+        const switcher2 = new Switch(this, false, GRID_UNIT_SIZE);
+        const light = new Light(this, false, GRID_UNIT_SIZE);
+        const light2 = new Light(this, false, GRID_UNIT_SIZE);
+        const light3 = new Light(this, false, GRID_UNIT_SIZE);
+        const toggle = new Toggle(this, false, GRID_UNIT_SIZE)
 
         this.itemLayer.add([power, power2, switcher, switcher2, light, light2, light3, toggle])
         this.items.push(power, power2, switcher, switcher2, light, light2, light3, toggle);

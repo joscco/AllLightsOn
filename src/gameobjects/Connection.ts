@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import {Vec2} from "../Helpers/Dict";
-import {ConnectionPartner} from "../interfaces/ConnectionPartner";
+import {ConnectionPartner, GameColors} from "../interfaces/ConnectionPartner";
 import Graphics = Phaser.GameObjects.Graphics;
 import QuadraticBezier = Phaser.Curves.QuadraticBezier;
 import Line = Phaser.Curves.Line;
@@ -15,10 +15,25 @@ export class Connection extends Graphics {
     private consumer?: ConnectionPartner
     private directedWithPower: boolean = false
 
+    private showingElectrons: boolean = false
+    private lastElectronIndex: number = 0
+    private electronGraphics: Graphics
+    private electronMsPerNode = 100;
+    private lastElectronChange: number
+
     constructor(scene: Phaser.Scene) {
         super(scene)
         scene.add.existing(this)
         this.setDirectedWithPower(false)
+        this.lastElectronChange = scene.time.now
+        this.electronGraphics = scene.add.graphics({
+            fillStyle: {
+                color: GameColors.LIGHT
+            }
+        })
+        this.electronGraphics.setDepth(3)
+
+        setInterval(() => this.update(), 50)
     }
 
     getStart(): ConnectionPartner | undefined {
@@ -64,11 +79,11 @@ export class Connection extends Graphics {
         // Clearing path
         this.clear()
         // Setting color
-        if (this.isDirectedWithPower()) {
-            this.lineStyle(7, 0xffffff)
-        } else{
-            this.lineStyle(7, 0x1b3953)
-        }
+        // if (this.isDirectedWithPower()) {
+        //     this.lineStyle(7, GameColors.LIGHT)
+        // } else{
+            this.lineStyle(7, GameColors.DARK_BLUE)
+        // }
         // Redrawing path
         var path = new Path();
         for (let i = 0; i < this.posPath.length - 1; i++) {
@@ -92,15 +107,16 @@ export class Connection extends Graphics {
 
             if (this.isDirectedWithPower()) {
                 // Start in red and end in green
-                let startToEndDirection = this.getStart() == this.supplier
-                this.fillStyle(startToEndDirection ? 0xff0000 : 0x00ff00)
+                this.showingElectrons = true
+                this.fillStyle(GameColors.LIGHT)
                 this.fillCircle(start.x, start.y, 7)
-                this.fillStyle(startToEndDirection ? 0x00ff00: 0xff0000)
                 this.fillCircle(last.x, last.y, 7)
 
             } else {
+                this.showingElectrons = false
+                this.electronGraphics.clear()
                 // just put normal points
-                this.fillStyle(0x1b3953)
+                this.fillStyle(GameColors.DARK_BLUE)
                 this.fillCircle(start.x, start.y, 7)
                 this.fillCircle(last.x, last.y, 7)
             }
@@ -113,5 +129,14 @@ export class Connection extends Graphics {
 
     hasPartner(source: ConnectionPartner) {
         return this.getEnd() == source || this.getStart() == source
+    }
+
+    update() {
+        if (this.showingElectrons && this.scene.time.now > this.lastElectronChange + this.electronMsPerNode) {
+            this.electronGraphics.clear()
+            this.lastElectronIndex = (this.lastElectronIndex + 1) % this.posPath.length
+            var newPos = this.posPath.at(this.lastElectronIndex) ?? this.posPath[0]!
+            this.electronGraphics.fillCircle(newPos.x, newPos.y, 5)
+        }
     }
 }

@@ -1,12 +1,11 @@
 import Phaser from "phaser";
-import {ConnectionPartner} from "../interfaces/ConnectionPartner";
+import {ConnectionPartner, GameBaseColor} from "../interfaces/ConnectionPartner";
 
 export class Switch extends ConnectionPartner {
     private _isOn: boolean = false;
     // private anyPowerProvided: boolean = false;
-
-    constructor(scene: Phaser.Scene, on: boolean) {
-        super(scene, 'switch_on');
+    constructor(scene: Phaser.Scene, on: boolean, gridUnitSize: number) {
+        super(scene, 'switch_on', gridUnitSize);
         this.setOn(on)
         scene.add.existing(this)
     }
@@ -15,12 +14,16 @@ export class Switch extends ConnectionPartner {
         // this.anyPowerProvided = false
     }
 
-    getColWidth(): number {
-        return 4
+    getBaseColor(): GameBaseColor {
+        return GameBaseColor.ORANGE
     }
 
-    getRowWidth(): number {
-        return 4
+    getColWidth(): number {
+        return 3
+    }
+
+    getRowHeight(): number {
+        return 3
     }
 
     powerAvailableAfter(): boolean {
@@ -58,7 +61,7 @@ export class Switch extends ConnectionPartner {
 
     setOn(value: boolean) {
         this._isOn = value;
-        this.setTexture(this._isOn
+        this.sprite.setTexture(this._isOn
             ? 'switch_on'
             : 'switch_off');
     }

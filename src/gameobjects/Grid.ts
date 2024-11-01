@@ -57,7 +57,7 @@ export class Grid extends Graphics {
 
     addAtIndex(index: Vec2, item: ConnectionPartner) {
         for (let colOffset = 0; colOffset < item.getColWidth(); colOffset++) {
-            for (let rowOffset = 0; rowOffset < item.getRowWidth(); rowOffset++) {
+            for (let rowOffset = 0; rowOffset < item.getRowHeight(); rowOffset++) {
                 let offsetIndex = {x: index.x + colOffset, y: index.y + rowOffset}
                 this.items.set(offsetIndex, item)
             }
@@ -66,7 +66,7 @@ export class Grid extends Graphics {
 
         var topRight = this.getPositionForIndex({
             x: index.x + (item.getColWidth() - 1) / 2,
-            y: index.y + (item.getRowWidth() - 1) / 2
+            y: index.y + (item.getRowHeight() - 1) / 2
         })
         item.setPosition(topRight.x, topRight.y)
     }
