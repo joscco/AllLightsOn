@@ -1,6 +1,16 @@
 import Phaser from "phaser";
-import {Vec2, vec2Mean} from "../Helpers/Dict";
 import {ConnectionPartner, GameColors} from "../interfaces/ConnectionPartner";
+import {mod, Vec2, vec2Mean} from "../Helpers/VecMath";
+import {
+    CONNECTOR_INSIDE_POINT_SIZE,
+    ELECTRON_COLOR,
+    IN_CONNECTOR_INNER_UNUSED_COLOR,
+    IN_CONNECTOR_INNER_USED_COLOR,
+    OUT_CONNECTOR_INNER_UNUSED_COLOR,
+    OUT_CONNECTOR_INNER_USED_COLOR,
+    UNUSED_CONNECTION_COLOR,
+    USED_CONNECTION_COLOR
+} from "./Grid";
 import Graphics = Phaser.GameObjects.Graphics;
 import QuadraticBezier = Phaser.Curves.QuadraticBezier;
 import Line = Phaser.Curves.Line;
@@ -8,12 +18,18 @@ import Vector2 = Phaser.Math.Vector2;
 import Path = Phaser.Curves.Path;
 
 export class Connection extends Graphics {
+    private indexPath: Vec2[] = []
     private posPath: Vec2[] = []
     private start?: ConnectionPartner
     private end?: ConnectionPartner
-    private supplier?: ConnectionPartner
-    private consumer?: ConnectionPartner
     private directedWithPower: boolean = false
+
+    // Only set after connection is added
+    private source?: ConnectionPartner
+    private sourceIndex?: Vec2
+    private consumer?: ConnectionPartner
+    private consumerIndex?: Vec2
+    private startIsSource?: boolean
 
     private showingElectrons: boolean = false
     private lastElectronIndex: number = 0
@@ -28,7 +44,7 @@ export class Connection extends Graphics {
         this.lastElectronChange = scene.time.now
         this.electronGraphics = scene.add.graphics({
             fillStyle: {
-                color: GameColors.LIGHT
+                color: ELECTRON_COLOR
             }
         })
         this.electronGraphics.setDepth(3)
@@ -58,19 +74,14 @@ export class Connection extends Graphics {
         return this.directedWithPower;
     }
 
-    checkDirection(from: ConnectionPartner, to: ConnectionPartner) {
-        return this.supplier == from && this.consumer == to
-    }
-
-    setDirectedWithPower(val: boolean, from?: ConnectionPartner, to?: ConnectionPartner) {
+    setDirectedWithPower(val: boolean) {
         this.directedWithPower = val
-        this.supplier = from
-        this.consumer = to
         this.draw()
     }
 
-    setPath(path: Vec2[]) {
-        this.posPath = path
+    setPath(posPath: Vec2[], indexPath: Vec2[]) {
+        this.posPath = posPath
+        this.indexPath = indexPath
     }
 
     draw() {
@@ -78,16 +89,16 @@ export class Connection extends Graphics {
         this.clear()
         // Setting color
         if (this.isDirectedWithPower()) {
-            this.lineStyle(7, GameColors.ORANGE)
-        } else{
-            this.lineStyle(7, GameColors.DARK_BLUE)
+            this.lineStyle(7, USED_CONNECTION_COLOR)
+        } else {
+            this.lineStyle(7, UNUSED_CONNECTION_COLOR)
         }
         // Redrawing path
-        var path = new Path();
+        let path = new Path();
         for (let i = 0; i < this.posPath.length - 1; i++) {
-            var first = this.posPath[i]
-            var second = this.posPath[i + 1]
-            var third = this.posPath[i + 2]
+            let first = this.posPath[i]
+            let second = this.posPath[i + 1]
+            let third = this.posPath[i + 2]
 
             if (third && first.x != third.x && first.y != third.y) {
                 path.add(new QuadraticBezier(new Vector2(first.x, first.y), new Vector2(second.x, second.y), new Vector2(third.x, third.y)))
@@ -99,34 +110,28 @@ export class Connection extends Graphics {
         path.draw(this)
 
         // Add endpoints
-        if (this.posPath.length > 1) {
-            let start = this.posPath[0]
-            let last = this.posPath.at(-1)!
+        if (this.posPath.length > 0) {
+            let sourcePosition = this.startIsSource ? this.posPath[0] : this.posPath.at(-1)!
+            let consumerPosition = this.startIsSource ? this.posPath.at(-1)! : this.posPath[0]
 
             if (this.isDirectedWithPower()) {
                 // Start in red and end in green
                 this.showingElectrons = true
-                this.fillStyle(GameColors.LIGHT)
-                this.fillCircle(start.x, start.y, 7)
-                this.fillCircle(last.x, last.y, 7)
+                this.fillStyle(OUT_CONNECTOR_INNER_USED_COLOR)
+                this.fillCircle(sourcePosition.x, sourcePosition.y, CONNECTOR_INSIDE_POINT_SIZE)
+                this.fillStyle(IN_CONNECTOR_INNER_USED_COLOR)
+                this.fillCircle(consumerPosition.x, consumerPosition.y, CONNECTOR_INSIDE_POINT_SIZE)
 
             } else {
                 this.showingElectrons = false
                 this.electronGraphics.clear()
                 // just put normal points
-                this.fillStyle(GameColors.DARK_BLUE)
-                this.fillCircle(start.x, start.y, 7)
-                this.fillCircle(last.x, last.y, 7)
+                this.fillStyle(OUT_CONNECTOR_INNER_UNUSED_COLOR)
+                this.fillCircle(sourcePosition.x, sourcePosition.y, CONNECTOR_INSIDE_POINT_SIZE)
+                this.fillStyle(IN_CONNECTOR_INNER_UNUSED_COLOR)
+                this.fillCircle(consumerPosition.x, consumerPosition.y, CONNECTOR_INSIDE_POINT_SIZE)
             }
         }
-    }
-
-    getPartnerThatIsNot(unwanted: ConnectionPartner) {
-        return [this.getEnd(), this.getStart()].find(el => el != unwanted)!
-    }
-
-    hasPartner(source: ConnectionPartner) {
-        return this.getEnd() == source || this.getStart() == source
     }
 
     update(now: number) {
@@ -134,9 +139,16 @@ export class Connection extends Graphics {
             this.lastElectronChange = now
             this.electronGraphics.clear()
 
-            var currentPosition = this.posPath[this.lastElectronIndex]
-            var secondNextPosition = this.posPath[this.lastElectronIndex + 2]
-            this.lastElectronIndex = (this.lastElectronIndex + 1) % this.posPath.length
+            let currentPosition = this.posPath[this.lastElectronIndex]
+            let secondNextPosition: Vec2
+            if (this.startIsSource) {
+                secondNextPosition = this.posPath[this.lastElectronIndex + 2]
+                this.lastElectronIndex = mod(this.lastElectronIndex + 1, this.posPath.length)
+            } else {
+                secondNextPosition = this.posPath[this.lastElectronIndex - 2]
+                this.lastElectronIndex = mod(this.lastElectronIndex - 1, this.posPath.length)
+            }
+
             var nextPosition = this.posPath.at(this.lastElectronIndex)!
             let newPos: Vec2
             if (secondNextPosition && (currentPosition.x != secondNextPosition.x) && (currentPosition.y != secondNextPosition.y)) {
@@ -148,5 +160,41 @@ export class Connection extends Graphics {
 
             this.electronGraphics.fillCircle(newPos.x, newPos.y, 6)
         }
+    }
+
+    getStartIndex() {
+        return this.indexPath[0]
+    }
+
+    getEndIndex() {
+        return this.indexPath.at(-1)
+    }
+
+    setSourceAndConsumerData(startIsSource: boolean) {
+        this.startIsSource = startIsSource
+        this.source = startIsSource ? this.getStart()! : this.getEnd()!;
+        this.sourceIndex = startIsSource ? this.getStartIndex() : this.getEndIndex()!;
+        this.consumer = startIsSource ? this.getEnd()! : this.getStart()!;
+        this.consumerIndex = startIsSource ? this.getEndIndex()! : this.getStartIndex();
+    }
+
+    getSourceIndex() {
+        return this.sourceIndex
+    }
+
+    getConsumerIndex() {
+        return this.consumerIndex
+    }
+
+    getSource() {
+        return this.source
+    }
+
+    getConsumer() {
+        return this.consumer
+    }
+
+    getStartIsSource() {
+        return this.startIsSource
     }
 }

@@ -3,6 +3,8 @@ import TweenChain = Phaser.Tweens.TweenChain;
 import {Scene} from "phaser";
 import NineSlice = Phaser.GameObjects.NineSlice;
 import Container = Phaser.GameObjects.Container;
+import Graphics = Phaser.GameObjects.Graphics;
+import {Connection} from "../gameobjects/Connection";
 
 export enum GameBaseColor {
     ORANGE,
@@ -24,17 +26,35 @@ export abstract class ConnectionPartner extends Container {
 
     protected base: NineSlice
     protected sprite: Image
+    protected insGraphics: Graphics
+    protected outsGraphics: Graphics
 
-    constructor(scene: Scene, texture: string, gridUnitSize: number) {
+    constructor(scene: Scene, texture: string) {
         super(scene, 0, 0);
         // Slight offset to top because of the bottom border
         this.sprite = scene.add.image(0, -3, texture)
         var baseTexture = this.getBaseTexture()
+        this.base = scene.add.nineslice(0, 5, baseTexture, 0, 0, 0, 25, 25, 25, 25)
+
+        this.insGraphics = scene.add.graphics({
+            fillStyle: {
+                color: GameColors.DARK
+            }
+        })
+        this.outsGraphics = scene.add.graphics({
+            fillStyle: {
+                color: GameColors.LIGHT
+            }
+        })
+
+        this.add([this.base, this.sprite, this.insGraphics, this.outsGraphics])
+    }
+
+    setWithUnitSize(gridUnitSize: number) {
         // Little less size to make it quadratic with bottom
         var width = gridUnitSize * (this.getColWidth()) - 5
         var height = gridUnitSize * (this.getRowHeight())
-        this.base = scene.add.nineslice(0, 5, baseTexture, 0, width, height, 25, 25, 25, 25)
-        this.add([this.base, this.sprite])
+        this.base.setSize(width, height)
     }
 
     abstract getBaseColor(): GameBaseColor
@@ -48,6 +68,10 @@ export abstract class ConnectionPartner extends Container {
         }
     }
 
+    abstract getNumberOfInputs(): number
+
+    abstract getNumberOfOutputs(): number
+
     abstract getColWidth(): number
 
     abstract getRowHeight(): number
@@ -60,8 +84,6 @@ export abstract class ConnectionPartner extends Container {
     // Consume power
     abstract consume(): void;
 
-    abstract getMaxNumberOfConnections(): number
-
     // Can this partner generally forward power?
     abstract isPowerForwarder(): boolean
 
@@ -70,35 +92,35 @@ export abstract class ConnectionPartner extends Container {
     abstract isLightBulb(): boolean
 
     // Can this partner forward now if power is available
-    abstract powerAvailableAfter(): boolean;
+    abstract powerAvailableAfter(incomingConnections: Connection[]): boolean;
 
     // Can this partners forwarding be checked now?
-    abstract powerForwardCanBeChecked(numberOfLeftConnections: number): boolean;
+    abstract powerForwardCanBeChecked(incomingConnections: Connection[]): boolean;
 
     abstract onClick(): void;
 
     public wiggle(): void {
         this.wiggleTween?.stop()
-        var currentX = this.x
+        let currentX = this.x
         this.wiggleTween = this.scene.tweens.chain({
             targets: this,
             onStop: () => {
                 this.x = currentX
             },
             tweens: [{
-                x: currentX + 5,
+                x: currentX + 3,
                 duration: 50,
                 ease: Phaser.Math.Easing.Quadratic.InOut,
             }, {
-                x: currentX - 5,
+                x: currentX - 3,
                 duration: 50,
                 ease: Phaser.Math.Easing.Quadratic.InOut,
             }, {
-                x: currentX + 5,
+                x: currentX + 3,
                 duration: 50,
                 ease: Phaser.Math.Easing.Quadratic.InOut,
             }, {
-                x: currentX - 5,
+                x: currentX - 3,
                 duration: 50,
                 ease: Phaser.Math.Easing.Quadratic.InOut,
             }, {

@@ -1,3 +1,5 @@
+import {Vec2} from "./VecMath";
+
 export class Dict<K, V> {
     private map = new Map<string, [K, V]>()
 
@@ -67,20 +69,6 @@ export class Dict<K, V> {
     copy() {
         return new Dict<K, V>((key: K) => this.toIdString(key), this)
     }
-}
-
-export type Vec2 = { x: number, y: number }
-
-export function vec2Equals(a: Vec2, b: Vec2, allowedOffset: number = 0.0001) {
-    return Math.abs(a.x - b.x) < allowedOffset && Math.abs(a.y - b.y) < allowedOffset
-}
-
-export function vec2Mean(a: Vec2, b: Vec2) {
-    return {x: (a.x + b.x)/2, y: (a.y + b.y)/2}
-}
-
-export function vec2Copy(v: Vec2) {
-    return {x: v.x, y: v.y}
 }
 
 export class Vector2Dict<V> extends Dict<Vec2, V> {

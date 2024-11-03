@@ -2,9 +2,16 @@ import Phaser from "phaser";
 import {ConnectionPartner, GameBaseColor} from "../interfaces/ConnectionPartner";
 
 export class PowerSource extends ConnectionPartner {
-    constructor(scene: Phaser.Scene, gridUnitSize: number) {
-        super(scene, 'power_on', gridUnitSize);
+    constructor(scene: Phaser.Scene) {
+        super(scene, 'power_on');
         scene.add.existing(this)
+    }
+
+    getNumberOfInputs(): number {
+        return 0
+    }
+    getNumberOfOutputs(): number {
+        return 1
     }
 
     getBaseColor(): GameBaseColor {
@@ -25,10 +32,6 @@ export class PowerSource extends ConnectionPartner {
 
     isLightBulb(): boolean {
         return false
-    }
-
-    getMaxNumberOfConnections(): number {
-        return 10
     }
 
     isPowerForwarder(): boolean {

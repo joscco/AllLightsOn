@@ -1,13 +1,21 @@
 import Phaser from "phaser";
 import {ConnectionPartner, GameBaseColor} from "../interfaces/ConnectionPartner";
+import {Connection} from "./Connection";
 
 export class Switch extends ConnectionPartner {
     private _isOn: boolean = false;
     // private anyPowerProvided: boolean = false;
-    constructor(scene: Phaser.Scene, on: boolean, gridUnitSize: number) {
-        super(scene, 'switch_on', gridUnitSize);
+    constructor(scene: Phaser.Scene, on: boolean) {
+        super(scene, 'switch_on');
         this.setOn(on)
         scene.add.existing(this)
+    }
+
+    getNumberOfInputs(): number {
+        return 1
+    }
+    getNumberOfOutputs(): number {
+        return 1
     }
 
     reset() {
@@ -30,17 +38,13 @@ export class Switch extends ConnectionPartner {
         return this.isOn()
     }
 
-    powerForwardCanBeChecked(numberOfLeftConnections: number): boolean {
+    powerForwardCanBeChecked(numberOfLeftConnections: Connection[]): boolean {
         return true
         // return numberOfLeftConnections == 0 || this.anyPowerProvided
     }
 
     isLightBulb(): boolean {
         return false
-    }
-
-    getMaxNumberOfConnections(): number {
-        return 20
     }
 
     isPowerForwarder(): boolean {
