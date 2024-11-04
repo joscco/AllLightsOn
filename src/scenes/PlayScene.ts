@@ -7,9 +7,8 @@ import {Grid} from "../gameobjects/Grid";
 import {Connection} from "../gameobjects/Connection";
 import {ConnectionPartner} from "../interfaces/ConnectionPartner";
 import {Vec2, vec2Copy, vec2Equals} from "../Helpers/VecMath";
-import {And} from "../gameobjects/And";
-import Vector2 = Phaser.Math.Vector2;
 import {Or} from "../gameobjects/Or";
+import Vector2 = Phaser.Math.Vector2;
 
 
 export default class PlayScene extends Phaser.Scene {
@@ -21,24 +20,29 @@ export default class PlayScene extends Phaser.Scene {
     }
 
     create() {
+        let text = this.add.text(GAME_WIDTH/2, 100, "Put all lights on.", {
+            fontFamily: "LondrinaThin",
+            fontSize: 60
+        })
+        text.setOrigin(0.5, 0.5)
         this.grid = new Grid(
             this,
             GAME_WIDTH / 2, GAME_HEIGHT / 2,
-            24, 16,
+            18, 16,
             PlayScene.GRID_UNIT_SIZE, PlayScene.GRID_UNIT_SIZE)
         this.grid.showGrid()
         let dragContainer = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0, 0)
         dragContainer.setInteractive()
         this.defineItemLogic();
 
-        this.grid.addItemAtIndex({x: -10, y: -5}, new PowerSource(this))
-        this.grid.addItemAtIndex({x: -10, y: 0}, new PowerSource(this))
-        this.grid.addItemAtIndex({x: -10, y: 5}, new PowerSource(this))
-        this.grid.addItemAtIndex({x: -5, y: -5}, new Switch(this, false))
-        this.grid.addItemAtIndex({x: -5, y: 0}, new Switch(this, false))
-        this.grid.addItemAtIndex({x: -5, y: 5}, new Switch(this, false))
-        this.grid.addItemAtIndex({x: 0, y: 0}, new Or(this))
-        this.grid.addItemAtIndex({x: 5, y: 0}, new Light(this, false))
+        this.grid.addItemAtIndex({x: -8, y: -5}, new PowerSource(this))
+        this.grid.addItemAtIndex({x: -8, y: 0}, new PowerSource(this))
+        this.grid.addItemAtIndex({x: -8, y: 5}, new PowerSource(this))
+        this.grid.addItemAtIndex({x: -3, y: -5}, new Switch(this, false))
+        this.grid.addItemAtIndex({x: -3, y: 0}, new Switch(this, false))
+        this.grid.addItemAtIndex({x: -3, y: 5}, new Switch(this, false))
+        this.grid.addItemAtIndex({x: 3, y: 0}, new Or(this))
+        this.grid.addItemAtIndex({x: 8, y: 0}, new Light(this, false))
     }
 
     update(time: number) {

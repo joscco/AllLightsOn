@@ -19,16 +19,16 @@ export default class GameScene extends Phaser.Scene {
             console.log('complete');
         });
 
-        this.load.image('base_orange', 'assets/Item_Back_Orange.png');
-        this.load.image('base_blue', 'assets/Item_Back_Blue.png');
-        this.load.image('light_off', 'assets/Light_Off.png');
-        this.load.image('light_on', 'assets/Light_On.png');
-        this.load.image('power_off', 'assets/Energy_Source_Off.png');
-        this.load.image('power_on', 'assets/Energy_Source_On.png');
-        this.load.image('switch_off', 'assets/Switch_Off.png');
-        this.load.image('switch_on', 'assets/Switch_On.png');
-        this.load.image('toggle_off', 'assets/Toggler_Off.png');
-        this.load.image('toggle_on', 'assets/Toggler_On.png');
+        this.load.image('base_orange', 'assets/images/Item_Back_Orange.png');
+        this.load.image('base_blue', 'assets/images/Item_Back_Blue.png');
+        this.load.image('light_off', 'assets/images/Light_Off.png');
+        this.load.image('light_on', 'assets/images/Light_On.png');
+        this.load.image('power_off', 'assets/images/Energy_Source_Off.png');
+        this.load.image('power_on', 'assets/images/Energy_Source_On.png');
+        this.load.image('switch_off', 'assets/images/Switch_Off.png');
+        this.load.image('switch_on', 'assets/images/Switch_On.png');
+        this.load.image('toggle_off', 'assets/images/Toggler_Off.png');
+        this.load.image('toggle_on', 'assets/images/Toggler_On.png');
     }
 
     create() {

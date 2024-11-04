@@ -5,6 +5,7 @@ import {Vector2Dict,} from "../Helpers/Dict"
 import {ConnectionPartner, GameColors} from "../interfaces/ConnectionPartner"
 import {Vec2, vec2Add, vec2Mean} from "../Helpers/VecMath"
 import {Connection} from "./Connection"
+import Clamp = Phaser.Math.Clamp;
 
 export type ConnectorInUsed = {
     partner: ConnectionPartner,
@@ -17,13 +18,13 @@ export const CONNECTOR_INSIDE_POINT_SIZE = 5
 export const CONNECTOR_POINT_SIZE = 10
 
 export const GRID_POINT_COLOR = GameColors.BLUE
-export const IN_CONNECTOR_COLOR = GameColors.DARK_BLUE
-export const IN_CONNECTOR_INNER_USED_COLOR = GameColors.LIGHT_ORANGE
+export const IN_CONNECTOR_COLOR = GameColors.RED
+export const IN_CONNECTOR_INNER_USED_COLOR = GameColors.DARK_BLUE
 export const IN_CONNECTOR_INNER_UNUSED_COLOR = GameColors.DARK_BLUE
 export const OUT_CONNECTOR_COLOR = GameColors.LIGHT_ORANGE
-export const OUT_CONNECTOR_INNER_USED_COLOR = GameColors.LIGHT_ORANGE
+export const OUT_CONNECTOR_INNER_USED_COLOR = GameColors.DARK_BLUE
 export const OUT_CONNECTOR_INNER_UNUSED_COLOR = GameColors.DARK_BLUE
-export const UNUSED_CONNECTION_COLOR = GameColors.DARK_BLUE
+export const UNUSED_CONNECTION_COLOR = GameColors.ORANGE
 export const USED_CONNECTION_COLOR = GameColors.LIGHT_ORANGE
 export const ELECTRON_COLOR = GameColors.LIGHT
 
@@ -33,6 +34,10 @@ export class Grid {
     y: number
     private columns: number
     private rows: number
+    private minColIndex: number
+    private maxColIndex: number
+    private minRowIndex: number
+    private maxRowIndex: number
     private colWidth: number
     private rowWidth: number
     private evenColsOffset: number
@@ -64,6 +69,10 @@ export class Grid {
         this.y = centerY
         this.columns = columns
         this.rows = rows
+        this.minColIndex = -columns / 2
+        this.maxColIndex = columns / 2
+        this.minRowIndex = -rows / 2
+        this.maxRowIndex = rows / 2
         this.colWidth = colWidth
         this.rowWidth = rowWidth
         this.evenColsOffset = (this.columns % 2 == 0) ? this.colWidth / 2 : 0
@@ -76,19 +85,25 @@ export class Grid {
         this.gridPointLayer.setDepth(0)
         this.updateGridRender()
 
-        // Set up item layer
-        this.itemLayer = this.scene.add.layer()
-        this.itemLayer.setDepth(1)
-
         // Set up connectors
-        this.inConnectorGraphics = this.scene.add.graphics({fillStyle: {color: IN_CONNECTOR_COLOR}})
-        this.outConnectorGraphics = this.scene.add.graphics({fillStyle: {color: OUT_CONNECTOR_COLOR}})
+        this.inConnectorGraphics = this.scene.add.graphics({
+            fillStyle: {color: IN_CONNECTOR_COLOR},
+            lineStyle: {color: IN_CONNECTOR_COLOR, width: 2 * CONNECTOR_POINT_SIZE}
+        })
+        this.outConnectorGraphics = this.scene.add.graphics({
+            fillStyle: {color: OUT_CONNECTOR_COLOR},
+            lineStyle: {color: OUT_CONNECTOR_COLOR, width: 2 * CONNECTOR_POINT_SIZE}
+        })
         this.connectorPointLayer = this.scene.add.layer([this.inConnectorGraphics, this.outConnectorGraphics])
-        this.connectorPointLayer.setDepth(2)
+        this.connectorPointLayer.setDepth(1)
 
         // Set up connections
         this.connectionLayer = this.scene.add.layer()
-        this.connectionLayer.setDepth(3)
+        this.connectionLayer.setDepth(2)
+
+        // Set up item layer
+        this.itemLayer = this.scene.add.layer()
+        this.itemLayer.setDepth(3)
     }
 
     addConnectionToLayer(connection: Connection) {
@@ -154,17 +169,25 @@ export class Grid {
         // Set connectors
         let leftBottomIndex = {x: bottomLeftIndex.x, y: bottomLeftIndex.y}
         for (let i = 0; i < item.getNumberOfInputs(); i++) {
-            let offsetIndex = vec2Add(leftBottomIndex, {x: 0, y: i})
+            let offsetIndex = vec2Add(leftBottomIndex, {x: -1, y: i})
+            let offsetOneRightIndex = vec2Add(leftBottomIndex, {x: 0, y: i})
+            this.itemMap.set(offsetIndex, item)
             let offsetPosition = this.getPositionForIndex(offsetIndex)
+            let offsetOneRightPosition = this.getPositionForIndex(offsetOneRightIndex)
             this.inConnectorMap.set(offsetIndex, {partner: item, used: false, isInput: true})
+            this.inConnectorGraphics.lineBetween(offsetPosition.x, offsetPosition.y, offsetOneRightPosition.x, offsetOneRightPosition.y)
             this.inConnectorGraphics.fillCircle(offsetPosition.x, offsetPosition.y, CONNECTOR_POINT_SIZE)
         }
 
-        let rightTopIndex = {x: bottomLeftIndex.x + item.getRowHeight() - 1, y: bottomLeftIndex.y}
+        let rightTopIndex = {x: bottomLeftIndex.x + item.getColWidth() - 1, y: bottomLeftIndex.y}
         for (let j = 0; j < item.getNumberOfOutputs(); j++) {
-            let offsetIndex = vec2Add(rightTopIndex, {x: 0, y: j})
+            let offsetIndex = vec2Add(rightTopIndex, {x: 1, y: j})
+            let offsetOneLeftIndex = vec2Add(leftBottomIndex, {x: 0, y: j})
+            this.itemMap.set(offsetIndex, item)
             let offsetPosition = this.getPositionForIndex(offsetIndex)
+            let offsetOneLeftPosition = this.getPositionForIndex(offsetOneLeftIndex)
             this.outConnectorMap.set(offsetIndex, {partner: item, used: false, isInput: false})
+            this.outConnectorGraphics.lineBetween(offsetPosition.x, offsetPosition.y, offsetOneLeftPosition.x, offsetOneLeftPosition.y)
             this.outConnectorGraphics.fillCircle(offsetPosition.x, offsetPosition.y, CONNECTOR_POINT_SIZE)
         }
 
@@ -179,8 +202,8 @@ export class Grid {
 
     getIndexForPosition(pos: Vec2): Vec2 {
         return {
-            x: Math.round((pos.x - this.evenColsOffset - this.x) / this.colWidth),
-            y: Math.round((pos.y - this.evenRowsOffset - this.y) / this.rowWidth),
+            x: Clamp(Math.round((pos.x - this.evenColsOffset - this.x) / this.colWidth), this.minColIndex, this.maxColIndex),
+            y: Clamp(Math.round((pos.y - this.evenRowsOffset - this.y) / this.rowWidth), this.minRowIndex, this.maxRowIndex),
         }
     }
 

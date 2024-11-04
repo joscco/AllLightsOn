@@ -27,11 +27,11 @@ export class Switch extends ConnectionPartner {
     }
 
     getColWidth(): number {
-        return 3
+        return 2
     }
 
     getRowHeight(): number {
-        return 3
+        return 1
     }
 
     powerAvailableAfter(): boolean {

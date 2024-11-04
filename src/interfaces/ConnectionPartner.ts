@@ -25,16 +25,22 @@ export const GameColors = {
 export abstract class ConnectionPartner extends Container {
 
     protected base: NineSlice
-    protected sprite: Image
+    protected sprite?: Image
     protected insGraphics: Graphics
     protected outsGraphics: Graphics
 
-    constructor(scene: Scene, texture: string) {
+    constructor(scene: Scene, texture: string | null) {
         super(scene, 0, 0);
         // Slight offset to top because of the bottom border
-        this.sprite = scene.add.image(0, -3, texture)
         var baseTexture = this.getBaseTexture()
         this.base = scene.add.nineslice(0, 5, baseTexture, 0, 0, 0, 25, 25, 25, 25)
+        this.add(this.base)
+
+        if (texture) {
+            this.sprite = scene.add.image(0, -1, texture)
+            this.add(this.sprite)
+        }
+
 
         this.insGraphics = scene.add.graphics({
             fillStyle: {
@@ -46,13 +52,12 @@ export abstract class ConnectionPartner extends Container {
                 color: GameColors.LIGHT
             }
         })
-
-        this.add([this.base, this.sprite, this.insGraphics, this.outsGraphics])
+        this.add([this.insGraphics, this.outsGraphics])
     }
 
     setWithUnitSize(gridUnitSize: number) {
         // Little less size to make it quadratic with bottom
-        var width = gridUnitSize * (this.getColWidth()) - 5
+        var width = gridUnitSize * (this.getColWidth()) + 5
         var height = gridUnitSize * (this.getRowHeight())
         this.base.setSize(width, height)
     }

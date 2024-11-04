@@ -4,6 +4,25 @@
     <title>All Lights On</title>
     <meta charset="utf-8"/>
     <style>
+        @font-face {
+            font-family: "Londrina";
+            src: url("/assets/fonts/LondrinaSolid-Regular.ttf") format("truetype");
+            font-weight: normal;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: "LondrinaBold";
+            src: url("/assets/fonts/LondrinaSolid-Black.ttf") format("truetype");
+            font-weight: normal;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: "LondrinaThin";
+            src: url("/assets/fonts/LondrinaSolid-Light.ttf") format("truetype");
+            font-weight: normal;
+            font-style: normal;
+        }
+
         body {
             margin: 0;
             background-color: #091b2f;
@@ -12,6 +31,9 @@
     <script type="module" src="/src/index.ts"></script>
 </head>
 <body>
+<div style="font-family:Londrina; position:absolute; left:-1000px; visibility:hidden;">.</div>
+<div style="font-family:LondrinaBold; position:absolute; left:-1000px; visibility:hidden;">.</div>
+<div style="font-family:LondrinaThin; position:absolute; left:-1000px; visibility:hidden;">.</div>
 <div id="game"></div>
 </body>
 </html>

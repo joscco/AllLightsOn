@@ -6,8 +6,7 @@ export class Light extends ConnectionPartner {
     private _isOn?: boolean;
 
     constructor(scene: Phaser.Scene, on: boolean) {
-        super(scene, 'light_off');
-        this.sprite.setOrigin(0.5, 0.7)
+        super(scene, null);
         this.setOn(on)
         scene.add.existing(this)
     }
@@ -28,10 +27,10 @@ export class Light extends ConnectionPartner {
     }
 
     getColWidth(): number {
-        return 3
+        return 1
     }
     getRowHeight(): number {
-        return 3
+        return 1
     }
 
     onClick() {
@@ -59,9 +58,9 @@ export class Light extends ConnectionPartner {
 
     private setOn(value: boolean) {
         this._isOn = value;
-        this.sprite.setTexture(this._isOn
-            ? 'light_on'
-            : 'light_off');
+        // this.sprite.setTexture(this._isOn
+        //     ? 'light_on'
+        //     : 'light_off');
 
     }
 
