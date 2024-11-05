@@ -1,26 +1,28 @@
 import Phaser from 'phaser';
-import {Light} from "../gameobjects/Light";
-import {PowerSource} from "../gameobjects/PowerSource";
-import {Switch} from "../gameobjects/Switch";
+import {Light} from "../gameobjects/Items/Light";
+import {Power} from "../gameobjects/Items/Power";
+import {Switch} from "../gameobjects/Items/Switch";
 import {GAME_HEIGHT, GAME_WIDTH} from "../config";
 import {Grid} from "../gameobjects/Grid";
 import {Connection} from "../gameobjects/Connection";
 import {ConnectionPartner} from "../interfaces/ConnectionPartner";
-import {Vec2, vec2Copy, vec2Equals} from "../Helpers/VecMath";
-import {Or} from "../gameobjects/Or";
+import {Vec2, vec2Equals} from "../Helpers/VecMath";
+import {Or} from "../gameobjects/Items/Or";
+import {AStarFinder} from "../AStar/AStarFinder";
 import Vector2 = Phaser.Math.Vector2;
 
 
 export default class PlayScene extends Phaser.Scene {
     private static GRID_UNIT_SIZE = 40
     private grid?: Grid
+    private pathFinder?: AStarFinder
 
     constructor() {
         super({key: 'PlayScene'})
     }
 
     create() {
-        let text = this.add.text(GAME_WIDTH/2, 100, "Put all lights on.", {
+        let text = this.add.text(GAME_WIDTH / 2, 100, "Put all lights on.", {
             fontFamily: "LondrinaThin",
             fontSize: 60
         })
@@ -31,13 +33,15 @@ export default class PlayScene extends Phaser.Scene {
             18, 16,
             PlayScene.GRID_UNIT_SIZE, PlayScene.GRID_UNIT_SIZE)
         this.grid.showGrid()
+        this.pathFinder = new AStarFinder();
+
         let dragContainer = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0, 0)
         dragContainer.setInteractive()
         this.defineItemLogic();
 
-        this.grid.addItemAtIndex({x: -8, y: -5}, new PowerSource(this))
-        this.grid.addItemAtIndex({x: -8, y: 0}, new PowerSource(this))
-        this.grid.addItemAtIndex({x: -8, y: 5}, new PowerSource(this))
+        this.grid.addItemAtIndex({x: -8, y: -5}, new Power(this))
+        this.grid.addItemAtIndex({x: -8, y: 0}, new Power(this))
+        this.grid.addItemAtIndex({x: -8, y: 5}, new Power(this))
         this.grid.addItemAtIndex({x: -3, y: -5}, new Switch(this, false))
         this.grid.addItemAtIndex({x: -3, y: 0}, new Switch(this, false))
         this.grid.addItemAtIndex({x: -3, y: 5}, new Switch(this, false))
@@ -75,8 +79,10 @@ export default class PlayScene extends Phaser.Scene {
             if (pressed && connection) {
                 let indexForPointer = this.grid!.getIndexForPosition(pointer)
 
-                // Calculate path without checking
-                indexPath = this.addPointToPath(indexForPointer, indexPath, connection);
+                // Calculate path with only duplicate checking
+                indexPath = this.addPointToPath(indexForPointer, indexPath);
+
+                // Adapt Start And End
                 let startIndex = indexPath.slice().reverse().findIndex(index => {
                     let connector = this.grid!.getConnectorAtIndex(index);
                     return connector && connector.partner == connection!.getStart()
@@ -85,23 +91,19 @@ export default class PlayScene extends Phaser.Scene {
                 if (startIndex > -1) {
                     indexPath = indexPath.slice(indexPath.length - 1 - startIndex)
 
-                    let firstInvalidIndex = indexPath.findIndex(index => {
+                    let endIndices = indexPath.map(index => {
                         let connector = this.grid!.getConnectorAtIndex(index);
-                        return !connector && this.grid!.getItemAtIndex(index)
-                    })
-                    if (firstInvalidIndex > -1) {
-                        indexPath = indexPath.slice(0, firstInvalidIndex)
-                    }
-
-                    let firstEndIndex = indexPath.findIndex(index => {
-                        let connector = this.grid!.getConnectorAtIndex(index);
-                        return connector && connector.partner != connection!.getStart()
-                    })
+                        if (connector && connector.partner != connection!.getStart()) {
+                            return true
+                        }})
+                    let firstEndIndex = endIndices.indexOf(true)
+                    let lastEndIndex = endIndices.lastIndexOf(true)
                     if (firstEndIndex > -1) {
                         // Start and End found, now check if feasible connectors exist
-                        let itemAtStart = this.grid?.getItemAtIndex(indexPath[0])
-                        let itemAtEnd = this.grid?.getItemAtIndex(indexPath.at(firstEndIndex)!)
-                        indexPath = indexPath.slice(0, firstEndIndex + 1)
+                        let itemAtStart = this.grid!.getItemAtIndex(indexPath[0])
+                        let pathToAdd = this.pathFinder!.findPath(this.grid!, indexPath[firstEndIndex-1], indexPath[lastEndIndex])
+                        indexPath = this.removeDuplicates(pathToAdd, indexPath.slice(0, firstEndIndex));
+                        let itemAtEnd = this.grid!.getItemAtIndex(indexPath.at(-1)!)
 
                         let startIndex = indexPath[0]
                         let endIndex = indexPath.at(-1)!
@@ -150,56 +152,35 @@ export default class PlayScene extends Phaser.Scene {
         })
     }
 
-    private addPointToPath(
-        indexForPointer: Vec2,
-        switcherPath: Vec2[],
-        connection: Connection): Vec2[] {
-        let previousOccurrenceInPath = switcherPath.findIndex(index => vec2Equals(index, indexForPointer))
-        if (previousOccurrenceInPath > -1) {
-            if (previousOccurrenceInPath != switcherPath.length - 1) {
-                // if last occurence was last index, there would be nothing to do
-                // otherwise reset path to last occurence
-                switcherPath = switcherPath.slice(0, Math.max(previousOccurrenceInPath + 1, 1))
-            }
+    private addPointToPath(indexForPointer: Vec2, switcherPath: Vec2[]): Vec2[] {
+        let lastIndex = switcherPath.at(-1)
+        let newIndices: Vec2[] = []
+        if (!lastIndex || Math.abs(indexForPointer.x - lastIndex.x) + Math.abs(indexForPointer.y - lastIndex.y) == 1) {
+            newIndices.push(indexForPointer)
         } else {
-            // Add new point
-            let lastIndex = switcherPath.at(-1)
-            if (!connection.getEnd()) {
-                if (!lastIndex || Math.abs(indexForPointer.x - lastIndex.x) + Math.abs(indexForPointer.y - lastIndex.y) == 1) {
-                    switcherPath.push(indexForPointer)
-                } else {
-                    // Add trivial connection path
-                    switcherPath = this.calculateLinkingPath(switcherPath, indexForPointer)
-                }
-            }
+            // Add trivial connection path
+            newIndices = this.pathFinder!.findPath(this.grid!, lastIndex, indexForPointer);
         }
-        return switcherPath
+
+        switcherPath = this.removeDuplicates(newIndices, switcherPath);
+        return switcherPath;
     }
 
-    calculateLinkingPath(previousPath: Vec2[], end: Vec2): Vec2[] {
-        let result: Vec2[] = previousPath.map(vec2Copy)
-        let start = previousPath.at(-1)!
-        let curX = start.x
-        let curY = start.y
-        while (curX != end.x) {
-            curX = this.oneIntoDirectionOf(curX, end.x)
-            let newIndex = {x: curX, y: curY}
-            let duplicateIndex = result.findIndex(index => vec2Equals(index, newIndex))
-            if (duplicateIndex > -1) {
-                result = result.slice(0, duplicateIndex)
+    private removeDuplicates(newIndices: Vec2[], switcherPath: Vec2[]) {
+        for (let newIndex of newIndices) {
+            let previousOccurrenceInPath = switcherPath.findIndex(index => vec2Equals(index, newIndex))
+            if (previousOccurrenceInPath > -1) {
+                if (previousOccurrenceInPath != switcherPath.length - 1) {
+                    // if last occurence was last index, there would be nothing to do
+                    // otherwise reset path to last occurence
+                    switcherPath = switcherPath.slice(0, Math.max(previousOccurrenceInPath + 1, 1))
+                }
+            } else {
+                // Add new point
+                switcherPath.push(newIndex)
             }
-            result.push(newIndex)
         }
-        while (curY != end.y) {
-            curY = this.oneIntoDirectionOf(curY, end.y)
-            let newIndex = {x: curX, y: curY}
-            let duplicateIndex = result.findIndex(index => vec2Equals(index, newIndex))
-            if (duplicateIndex > -1) {
-                result = result.slice(0, duplicateIndex)
-            }
-            result.push(newIndex)
-        }
-        return result
+        return switcherPath;
     }
 
     checkSources() {
@@ -238,15 +219,5 @@ export default class PlayScene extends Phaser.Scene {
                 }
             }
         }
-    }
-
-    private oneIntoDirectionOf(from: number, to: number) {
-        if (from < to) {
-            return from + 1
-        }
-        if (from > to) {
-            return from - 1
-        }
-        return from
     }
 }

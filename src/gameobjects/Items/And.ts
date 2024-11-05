@@ -1,6 +1,6 @@
 import Phaser from "phaser";
-import {ConnectionPartner, GameBaseColor} from "../interfaces/ConnectionPartner";
-import {Connection} from "./Connection";
+import {ConnectionPartner, GameBaseColor} from "../../interfaces/ConnectionPartner";
+import {Connection} from "../Connection";
 
 export class And extends ConnectionPartner {
 

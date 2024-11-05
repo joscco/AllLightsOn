@@ -1,11 +1,12 @@
 import Graphics = Phaser.GameObjects.Graphics;
 import Layer = Phaser.GameObjects.Layer;
+import Clamp = Phaser.Math.Clamp;
 import {Scene} from "phaser"
 import {Vector2Dict,} from "../Helpers/Dict"
 import {ConnectionPartner, GameColors} from "../interfaces/ConnectionPartner"
-import {Vec2, vec2Add, vec2Mean} from "../Helpers/VecMath"
+import {Vec2, vec2Add, vec2Equals, vec2Mean} from "../Helpers/VecMath"
 import {Connection} from "./Connection"
-import Clamp = Phaser.Math.Clamp;
+import {AStarGrid} from "../AStar/AStarFinder";
 
 export type ConnectorInUsed = {
     partner: ConnectionPartner,
@@ -28,16 +29,16 @@ export const UNUSED_CONNECTION_COLOR = GameColors.ORANGE
 export const USED_CONNECTION_COLOR = GameColors.LIGHT_ORANGE
 export const ELECTRON_COLOR = GameColors.LIGHT
 
-export class Grid {
+export class Grid implements AStarGrid {
     scene: Scene
     x: number
     y: number
+    minColIndex: number
+    maxColIndex: number
+    minRowIndex: number
+    maxRowIndex: number
     private columns: number
     private rows: number
-    private minColIndex: number
-    private maxColIndex: number
-    private minRowIndex: number
-    private maxRowIndex: number
     private colWidth: number
     private rowWidth: number
     private evenColsOffset: number
@@ -105,6 +106,20 @@ export class Grid {
         this.itemLayer = this.scene.add.layer()
         this.itemLayer.setDepth(3)
     }
+
+    isFreeAt(v: Vec2): boolean {
+        return !this.itemMap.has(v)
+    }
+
+    getNeighbors(v: Vec2, exceptions: Vec2[] = []): Vec2[] {
+        return [{x: v.x - 1, y: v.y},
+            {x: v.x + 1, y: v.y},
+            {x: v.x, y: v.y - 1},
+            {x: v.x, y: v.y + 1}]
+            .filter(index => index.x >= this.minRowIndex && index.x <= this.maxRowIndex
+                && index.y >= this.minColIndex && index.y <= this.maxColIndex)
+            .filter(index => this.isFreeAt(index) || exceptions.some(item => vec2Equals(item, index)))
+    };
 
     addConnectionToLayer(connection: Connection) {
         this.connectionLayer.add(connection)

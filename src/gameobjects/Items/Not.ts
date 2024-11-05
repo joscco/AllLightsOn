@@ -1,11 +1,11 @@
 import Phaser from "phaser";
-import {ConnectionPartner, GameBaseColor} from "../interfaces/ConnectionPartner";
-import {Connection} from "./Connection";
+import {ConnectionPartner, GameBaseColor} from "../../interfaces/ConnectionPartner";
+import {Connection} from "../Connection";
 
-export class Or extends ConnectionPartner {
+export class And extends ConnectionPartner {
 
     constructor(scene: Phaser.Scene) {
-        super(scene, 'toggle_off');
+        super(scene, 'toggle_on');
         scene.add.existing(this)
     }
 
@@ -24,7 +24,7 @@ export class Or extends ConnectionPartner {
     }
 
     getColWidth(): number {
-        return 2
+        return 3
     }
     getRowHeight(): number {
         return 3
@@ -34,12 +34,12 @@ export class Or extends ConnectionPartner {
         return
     }
 
-    powerAvailableAfter(): boolean {
-        return true
+    powerAvailableAfter(incomingConnections: Connection[]): boolean {
+        return incomingConnections.every(connection => connection.isDirectedWithPower())
     }
 
-    powerForwardCanBeChecked(numberOfLeftConnections: Connection[]): boolean {
-        return true
+    powerForwardCanBeChecked(incomingConnections: Connection[]): boolean {
+        return incomingConnections.every(connection => connection.isDirectedWithPower())
     }
 
     isLightBulb(): boolean {
