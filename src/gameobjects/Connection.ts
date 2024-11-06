@@ -1,6 +1,6 @@
 import Phaser from "phaser";
-import {ConnectionPartner, GameColors} from "../interfaces/ConnectionPartner";
-import {mod, Vec2, vec2Mean} from "../Helpers/VecMath";
+import {Item, GameColors} from "../interfaces/Item";
+import {mod, Vec2, vec2Equals, vec2Mean} from "../Helpers/VecMath";
 import {
     CONNECTOR_INSIDE_POINT_SIZE,
     ELECTRON_COLOR,
@@ -20,14 +20,14 @@ import Path = Phaser.Curves.Path;
 export class Connection extends Graphics {
     private indexPath: Vec2[] = []
     private posPath: Vec2[] = []
-    private start?: ConnectionPartner
-    private end?: ConnectionPartner
+    private start?: Item
+    private end?: Item
     private directedWithPower: boolean = false
 
     // Only set after connection is added
-    private source?: ConnectionPartner
+    private source?: Item
     private sourceIndex?: Vec2
-    private consumer?: ConnectionPartner
+    private consumer?: Item
     private consumerIndex?: Vec2
     private startIsSource?: boolean
 
@@ -50,19 +50,19 @@ export class Connection extends Graphics {
         this.electronGraphics.setDepth(3)
     }
 
-    getStart(): ConnectionPartner | undefined {
+    getStart(): Item | undefined {
         return this.start;
     }
 
-    setStart(start: ConnectionPartner) {
+    setStart(start: Item) {
         this.start = start
     }
 
-    getEnd(): ConnectionPartner | undefined {
+    getEnd(): Item | undefined {
         return this.end
     }
 
-    setEnd(end: ConnectionPartner | undefined) {
+    setEnd(end: Item | undefined) {
         this.end = end
     }
 
@@ -111,6 +111,23 @@ export class Connection extends Graphics {
 
         // Add endpoints
         if (this.posPath.length > 0) {
+            if (!this.end) {
+                // Still in move mode
+                this.showingElectrons = false
+                this.electronGraphics.clear()
+                // just put normal points
+                let start = this.posPath[0]
+                let end = this.posPath.at(-1)!
+                this.fillStyle(OUT_CONNECTOR_INNER_UNUSED_COLOR)
+                this.fillCircle(start.x, start.y, CONNECTOR_INSIDE_POINT_SIZE)
+                if (!vec2Equals(start, end)) {
+                    this.fillStyle(GameColors.ORANGE)
+                    this.fillCircle(end.x, end.y, CONNECTOR_INSIDE_POINT_SIZE)
+                }
+                return
+            }
+
+            // Connection is complete
             let sourcePosition = this.startIsSource ? this.posPath[0] : this.posPath.at(-1)!
             let consumerPosition = this.startIsSource ? this.posPath.at(-1)! : this.posPath[0]
 

@@ -3,13 +3,13 @@ import Layer = Phaser.GameObjects.Layer;
 import Clamp = Phaser.Math.Clamp;
 import {Scene} from "phaser"
 import {Vector2Dict,} from "../Helpers/Dict"
-import {ConnectionPartner, GameColors} from "../interfaces/ConnectionPartner"
+import {Item, GameColors} from "../interfaces/Item"
 import {Vec2, vec2Add, vec2Equals, vec2Mean} from "../Helpers/VecMath"
 import {Connection} from "./Connection"
 import {AStarGrid} from "../AStar/AStarFinder";
 
 export type ConnectorInUsed = {
-    partner: ConnectionPartner,
+    item: Item,
     used: boolean,
     isInput: boolean
 }
@@ -49,9 +49,9 @@ export class Grid implements AStarGrid {
     private gridPointLayer: Layer
 
     // Depth 1
-    private items: ConnectionPartner[] = []
+    private items: Item[] = []
     private itemLayer: Layer
-    private itemMap: Vector2Dict<ConnectionPartner> = new Vector2Dict()
+    private itemMap: Vector2Dict<Item> = new Vector2Dict()
 
     // Depth 2
     private inConnectorGraphics: Graphics
@@ -108,7 +108,7 @@ export class Grid implements AStarGrid {
     }
 
     isFreeAt(v: Vec2): boolean {
-        return !this.itemMap.has(v)
+        return !this.itemMap.has(v) && !this.inConnectorMap.has(v) && !this.outConnectorMap.has(v)
     }
 
     getNeighbors(v: Vec2, exceptions: Vec2[] = []): Vec2[] {
@@ -116,8 +116,8 @@ export class Grid implements AStarGrid {
             {x: v.x + 1, y: v.y},
             {x: v.x, y: v.y - 1},
             {x: v.x, y: v.y + 1}]
-            .filter(index => index.x >= this.minRowIndex && index.x <= this.maxRowIndex
-                && index.y >= this.minColIndex && index.y <= this.maxColIndex)
+            .filter(index => index.x >= this.minColIndex && index.x <= this.maxColIndex
+                && index.y >= this.minRowIndex && index.y <= this.maxRowIndex)
             .filter(index => this.isFreeAt(index) || exceptions.some(item => vec2Equals(item, index)))
     };
 
@@ -132,14 +132,14 @@ export class Grid implements AStarGrid {
 
         let outConnectorEntry = this.outConnectorMap.get(connection.getSourceIndex()!)!
         this.outConnectorMap.set(connection.getSourceIndex()!, {
-            partner: outConnectorEntry.partner,
+            item: outConnectorEntry.item,
             used: true,
             isInput: false
         })
 
         let inConnectorEntry = this.inConnectorMap.get(connection.getConsumerIndex()!)!
         this.inConnectorMap.set(connection.getConsumerIndex()!, {
-            partner: inConnectorEntry.partner,
+            item: inConnectorEntry.item,
             used: true,
             isInput: true
         })
@@ -159,7 +159,7 @@ export class Grid implements AStarGrid {
         return pathsWithBetweens.map(index => this.getPositionForIndex(index))
     }
 
-    addItemAtIndex(bottomLeftIndex: Vec2, item: ConnectionPartner) {
+    addItemAtIndex(bottomLeftIndex: Vec2, item: Item) {
         this.itemLayer.add(item)
         this.items.push(item);
         item.setWithUnitSize(this.colWidth)
@@ -186,10 +186,9 @@ export class Grid implements AStarGrid {
         for (let i = 0; i < item.getNumberOfInputs(); i++) {
             let offsetIndex = vec2Add(leftBottomIndex, {x: -1, y: i})
             let offsetOneRightIndex = vec2Add(leftBottomIndex, {x: 0, y: i})
-            this.itemMap.set(offsetIndex, item)
             let offsetPosition = this.getPositionForIndex(offsetIndex)
             let offsetOneRightPosition = this.getPositionForIndex(offsetOneRightIndex)
-            this.inConnectorMap.set(offsetIndex, {partner: item, used: false, isInput: true})
+            this.inConnectorMap.set(offsetIndex, {item: item, used: false, isInput: true})
             this.inConnectorGraphics.lineBetween(offsetPosition.x, offsetPosition.y, offsetOneRightPosition.x, offsetOneRightPosition.y)
             this.inConnectorGraphics.fillCircle(offsetPosition.x, offsetPosition.y, CONNECTOR_POINT_SIZE)
         }
@@ -198,14 +197,12 @@ export class Grid implements AStarGrid {
         for (let j = 0; j < item.getNumberOfOutputs(); j++) {
             let offsetIndex = vec2Add(rightTopIndex, {x: 1, y: j})
             let offsetOneLeftIndex = vec2Add(leftBottomIndex, {x: 0, y: j})
-            this.itemMap.set(offsetIndex, item)
             let offsetPosition = this.getPositionForIndex(offsetIndex)
             let offsetOneLeftPosition = this.getPositionForIndex(offsetOneLeftIndex)
-            this.outConnectorMap.set(offsetIndex, {partner: item, used: false, isInput: false})
+            this.outConnectorMap.set(offsetIndex, {item: item, used: false, isInput: false})
             this.outConnectorGraphics.lineBetween(offsetPosition.x, offsetPosition.y, offsetOneLeftPosition.x, offsetOneLeftPosition.y)
             this.outConnectorGraphics.fillCircle(offsetPosition.x, offsetPosition.y, CONNECTOR_POINT_SIZE)
         }
-
     }
 
     getPositionForIndex(index: Vec2): Vec2 {
@@ -226,7 +223,7 @@ export class Grid implements AStarGrid {
         this.gridPointGraphics.setAlpha(1)
     }
 
-    getItemAtIndex(index: Vec2): ConnectionPartner | undefined {
+    getItemAtIndex(index: Vec2): Item | undefined {
         return this.itemMap.get(index)
     }
 
@@ -272,7 +269,7 @@ export class Grid implements AStarGrid {
         return this.inConnectorMap.get(index) ?? this.outConnectorMap.get(index)
     }
 
-    getConnectionsFor(item: ConnectionPartner) {
+    getConnectionsFor(item: Item) {
         return this.connections.filter(connection =>
             connection.getConsumer()! == item
             || connection.getSource()! == item)

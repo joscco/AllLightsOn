@@ -1,8 +1,8 @@
 import Phaser from "phaser";
-import {ConnectionPartner, GameBaseColor} from "../../interfaces/ConnectionPartner";
+import {Item, GameBaseColor} from "../../interfaces/Item";
 import {Connection} from "../Connection";
 
-export class Switch extends ConnectionPartner {
+export class Switch extends Item {
     private _isOn: boolean = false;
     // private anyPowerProvided: boolean = false;
     constructor(scene: Phaser.Scene, on: boolean) {

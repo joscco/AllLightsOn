@@ -1,7 +1,7 @@
 import Phaser from "phaser";
-import {ConnectionPartner, GameBaseColor} from "../../interfaces/ConnectionPartner";
+import {Item, GameBaseColor} from "../../interfaces/Item";
 
-export class Power extends ConnectionPartner {
+export class Power extends Item {
     constructor(scene: Phaser.Scene) {
         super(scene, 'power_on');
         scene.add.existing(this)

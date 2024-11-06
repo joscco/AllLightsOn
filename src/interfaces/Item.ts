@@ -22,7 +22,7 @@ export const GameColors = {
     LIGHT: 0xfae8d5
 }
 
-export abstract class ConnectionPartner extends Container {
+export abstract class Item extends Container {
 
     protected base: NineSlice
     protected sprite?: Image

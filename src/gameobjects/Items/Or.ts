@@ -1,8 +1,8 @@
 import Phaser from "phaser";
-import {ConnectionPartner, GameBaseColor} from "../../interfaces/ConnectionPartner";
+import {Item, GameBaseColor} from "../../interfaces/Item";
 import {Connection} from "../Connection";
 
-export class Or extends ConnectionPartner {
+export class Or extends Item {
 
     constructor(scene: Phaser.Scene) {
         super(scene, 'toggle_off');
