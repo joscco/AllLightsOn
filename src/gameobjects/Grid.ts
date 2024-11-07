@@ -7,6 +7,7 @@ import {Item, GameColors} from "../interfaces/Item"
 import {Vec2, vec2Add, vec2Equals, vec2Mean} from "../Helpers/VecMath"
 import {Connection} from "./Connection"
 import {AStarGrid} from "../AStar/AStarFinder";
+import Container = Phaser.GameObjects.Container;
 
 export type ConnectorInUsed = {
     item: Item,
@@ -15,8 +16,9 @@ export type ConnectorInUsed = {
 }
 
 export const GRID_POINT_SIZE = 5
-export const CONNECTOR_INSIDE_POINT_SIZE = 5
-export const CONNECTOR_POINT_SIZE = 10
+export const CONNECTOR_INSIDE_POINT_SIZE = 8
+export const CONNECTOR_POINT_SIZE = 12
+export const ELECTRON_SIZE = 8
 
 export const GRID_POINT_COLOR = GameColors.BLUE
 export const IN_CONNECTOR_COLOR = GameColors.RED
@@ -58,6 +60,7 @@ export class Grid implements AStarGrid {
     private outConnectorGraphics: Graphics
     private inConnectorMap: Vector2Dict<ConnectorInUsed> = new Vector2Dict()
     private outConnectorMap: Vector2Dict<ConnectorInUsed> = new Vector2Dict()
+    private connectorImages: Container
     private connectorPointLayer: Layer
 
     // Depth 3
@@ -95,7 +98,8 @@ export class Grid implements AStarGrid {
             fillStyle: {color: OUT_CONNECTOR_COLOR},
             lineStyle: {color: OUT_CONNECTOR_COLOR, width: 2 * CONNECTOR_POINT_SIZE}
         })
-        this.connectorPointLayer = this.scene.add.layer([this.inConnectorGraphics, this.outConnectorGraphics])
+        this.connectorImages = this.scene.add.container()
+        this.connectorPointLayer = this.scene.add.layer([this.inConnectorGraphics, this.outConnectorGraphics, this.connectorImages])
         this.connectorPointLayer.setDepth(1)
 
         // Set up connections
@@ -191,6 +195,7 @@ export class Grid implements AStarGrid {
             this.inConnectorMap.set(offsetIndex, {item: item, used: false, isInput: true})
             this.inConnectorGraphics.lineBetween(offsetPosition.x, offsetPosition.y, offsetOneRightPosition.x, offsetOneRightPosition.y)
             this.inConnectorGraphics.fillCircle(offsetPosition.x, offsetPosition.y, CONNECTOR_POINT_SIZE)
+            this.connectorImages.add(this.scene.add.image(offsetPosition.x + 2, offsetPosition.y, 'plus_pole'))
         }
 
         let rightTopIndex = {x: bottomLeftIndex.x + item.getColWidth() - 1, y: bottomLeftIndex.y}
@@ -202,6 +207,7 @@ export class Grid implements AStarGrid {
             this.outConnectorMap.set(offsetIndex, {item: item, used: false, isInput: false})
             this.outConnectorGraphics.lineBetween(offsetPosition.x, offsetPosition.y, offsetOneLeftPosition.x, offsetOneLeftPosition.y)
             this.outConnectorGraphics.fillCircle(offsetPosition.x, offsetPosition.y, CONNECTOR_POINT_SIZE)
+            this.connectorImages.add(this.scene.add.image(offsetPosition.x - 2, offsetPosition.y, 'minus_pole'))
         }
     }
 

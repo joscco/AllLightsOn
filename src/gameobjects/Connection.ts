@@ -3,7 +3,7 @@ import {Item, GameColors} from "../interfaces/Item";
 import {mod, Vec2, vec2Equals, vec2Mean} from "../Helpers/VecMath";
 import {
     CONNECTOR_INSIDE_POINT_SIZE,
-    ELECTRON_COLOR,
+    ELECTRON_COLOR, ELECTRON_SIZE,
     IN_CONNECTOR_INNER_UNUSED_COLOR,
     IN_CONNECTOR_INNER_USED_COLOR,
     OUT_CONNECTOR_INNER_UNUSED_COLOR,
@@ -175,7 +175,7 @@ export class Connection extends Graphics {
                 newPos = nextPosition
             }
 
-            this.electronGraphics.fillCircle(newPos.x, newPos.y, 6)
+            this.electronGraphics.fillCircle(newPos.x, newPos.y, ELECTRON_SIZE)
         }
     }
 

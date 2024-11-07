@@ -29,6 +29,8 @@ export default class GameScene extends Phaser.Scene {
         this.load.image('switch_on', 'assets/images/Switch_On.png');
         this.load.image('toggle_off', 'assets/images/Toggler_Off.png');
         this.load.image('toggle_on', 'assets/images/Toggler_On.png');
+        this.load.image('plus_pole', 'assets/images/plusPole.png');
+        this.load.image('minus_pole', 'assets/images/minusPole.png');
     }
 
     create() {
