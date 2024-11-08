@@ -21,15 +21,12 @@ export default class Preloader extends Phaser.Scene {
 
         this.load.image('base_orange', 'assets/images/Item_Back_Orange.png');
         this.load.image('base_blue', 'assets/images/Item_Back_Blue.png');
-        this.load.image('light', 'assets/images/light.png');
         this.load.image('light_off', 'assets/images/light_off.png');
         this.load.image('light_on', 'assets/images/light_on.png');
         this.load.image('light_overlay', 'assets/images/light_overlay.png');
         this.load.image('power_on', 'assets/images/power_on.png');
         this.load.image('switch_off', 'assets/images/Switch_Off.png');
         this.load.image('switch_on', 'assets/images/Switch_On.png');
-        this.load.image('toggle_off', 'assets/images/Toggler_Off.png');
-        this.load.image('toggle_on', 'assets/images/Toggler_On.png');
         this.load.image('connector_plus', 'assets/images/ConnectorPlus.png');
         this.load.image('connector_minus', 'assets/images/ConnectorMinus.png');
     }

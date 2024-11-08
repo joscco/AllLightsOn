@@ -103,14 +103,15 @@ export default class PlayScene extends Phaser.Scene {
         } else if (this.connection) {
             if (this.connection.getStart() && this.connection.getEnd() && !this.grid!.hasConnection(this.connection)) {
                 this.grid!.addConnection(this.connection)
-                this.connection = undefined
                 this.checkSources()
+                this.connection = undefined
             } else {
                 this.connection.getStart()?.wiggle()
                 this.connection.getEnd()?.wiggle()
-                this.connection.destroy()
             }
         }
+        this.connection?.destroy()
+        this.connection = undefined
     }
 
     private onPointerDown(pointer: Phaser.Math.Vector2) {
@@ -152,7 +153,6 @@ export default class PlayScene extends Phaser.Scene {
                 return (this.grid!.getItemAtIndex(index) != undefined) || (this.grid?.getConnectorAtIndex(index)?.used)
             })
             if (firstInvalidIndex > -1) {
-                console.log("Found invalid indices. Slicing away: ", this.indexPath.length - firstInvalidIndex)
                 this.indexPath = this.indexPath.slice(0, firstInvalidIndex)
             }
 
@@ -185,12 +185,10 @@ export default class PlayScene extends Phaser.Scene {
                     this.connection.resetEnd()
                 }
             } else {
-                console.log("Found no end index")
                 this.connection.resetEnd()
             }
         } else {
             // No valid start = no valid path
-            console.log("Found no start index")
             this.indexPath = []
         }
 

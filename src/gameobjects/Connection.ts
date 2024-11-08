@@ -41,13 +41,16 @@ export class Connection extends Graphics {
     private showingElectrons: boolean = false
     private lastElectronIndex: number = 0
     private electronGraphics: Graphics
-    private electronMsPerNode = 50;
+    private electronMsPerNode: number = 50;
+    private minWaitingTimeForNextElectron = 500;
     private lastElectronChange: number
+    private lastRoundStart: number;
 
     constructor(scene: Phaser.Scene) {
         super(scene)
         scene.add.existing(this)
         this.lastElectronChange = scene.time.now
+        this.lastRoundStart = scene.time.now
         this.electronGraphics = scene.add.graphics({
             fillStyle: {
                 color: ELECTRON_COLOR
@@ -161,9 +164,20 @@ export class Connection extends Graphics {
     }
 
     update(now: number) {
-        if (this.showingElectrons && now > this.lastElectronChange + this.electronMsPerNode) {
+
+        if (this.showingElectrons && now > this.lastElectronChange + this.electronMsPerNode)
+        {
             this.lastElectronChange = now
             this.electronGraphics.clear()
+
+            if (this.lastElectronIndex == this.posPath.length - 1 && now < this.lastRoundStart + this.minWaitingTimeForNextElectron) {
+                // Last position was reached and new electron cannot be fired. Wait
+                return
+            }
+
+            if (this.lastElectronIndex == 0) {
+                this.lastRoundStart = now
+            }
 
             let currentPosition = this.posPath[this.lastElectronIndex]
             let secondNextPosition: Vec2
