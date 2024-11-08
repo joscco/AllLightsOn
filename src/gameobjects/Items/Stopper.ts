@@ -7,7 +7,8 @@ export class Stopper extends Item {
 
     private _isOn: boolean = false;
     constructor(scene: Phaser.Scene, on: boolean) {
-        super(scene, 'switch_on');
+        super(scene, 'stopper_on');
+        this.sprite?.setPosition(0, -8)
         this.setOn(on)
         scene.add.existing(this)
     }
@@ -28,7 +29,7 @@ export class Stopper extends Item {
     }
 
     getColWidth(): number {
-        return 1
+        return 2
     }
 
     getRowHeight(): number {
@@ -69,8 +70,8 @@ export class Stopper extends Item {
     setOn(value: boolean) {
         this._isOn = value;
         this.sprite!.setTexture(this._isOn
-            ? 'switch_on'
-            : 'switch_off');
+            ? 'stopper_on'
+            : 'stopper_off');
     }
 
     isOn(): boolean {

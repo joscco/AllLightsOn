@@ -56,7 +56,7 @@ export class Connection extends Graphics {
                 color: ELECTRON_COLOR
             }
         })
-        this.electronGraphics.setDepth(3)
+        this.electronGraphics.setDepth(2)
     }
 
     getStart(): Item | undefined {

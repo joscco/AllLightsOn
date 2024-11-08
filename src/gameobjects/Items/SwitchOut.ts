@@ -8,7 +8,7 @@ export class SwitchOut extends Item {
 
     // TODO: This needs reference to connectors!
     constructor(scene: Phaser.Scene, on: boolean) {
-        super(scene, 'switch_on');
+        super(scene, 'stopper_on');
         this.setOn(on)
         scene.add.existing(this)
     }

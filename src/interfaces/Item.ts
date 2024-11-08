@@ -1,10 +1,9 @@
 import Image = Phaser.GameObjects.Image;
 import TweenChain = Phaser.Tweens.TweenChain;
 import {Scene} from "phaser";
-import NineSlice = Phaser.GameObjects.NineSlice;
 import Container = Phaser.GameObjects.Container;
-import Graphics = Phaser.GameObjects.Graphics;
 import {Connection} from "../gameobjects/Connection";
+import NineSlice = Phaser.GameObjects.NineSlice;
 
 export enum GameBaseColor {
     ORANGE,
@@ -38,14 +37,13 @@ export const TEXT_COLOR_WHEN_OFF = GameColorStrings.DARK
 
 export abstract class Item extends Container {
 
-    protected base: NineSlice
+    protected base: Image
     protected sprite?: Image
 
     constructor(scene: Scene, texture: string | null) {
         super(scene, 0, 0);
         // Slight offset to top because of the bottom border
-        var baseTexture = this.getBaseTexture()
-        this.base = scene.add.nineslice(0, 0, baseTexture, 0, 0, 0, 10, 10, 10, 10)
+        this.base = scene.add.image(0, 0, this.getBaseTexture(this.getRowHeight(), this.getColWidth()))
         this.add(this.base)
 
         if (texture) {
@@ -63,12 +61,12 @@ export abstract class Item extends Container {
 
     abstract getBaseColor(): GameBaseColor
 
-    getBaseTexture(): string {
+    getBaseTexture(rows: number, cols: number): string {
         switch (this.getBaseColor()) {
             case GameBaseColor.BLUE:
-                return 'base_blue'
+                return 'base_blue_' + cols + '_' + rows
             case GameBaseColor.ORANGE:
-                return 'base_orange'
+                return 'base_orange_' + cols + '_' + rows
         }
     }
 

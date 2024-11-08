@@ -1,7 +1,6 @@
-import Phaser from "phaser";
-import {Item, GameBaseColor} from "../../interfaces/Item";
+import Phaser, {BlendModes} from "phaser";
+import {GameBaseColor, Item} from "../../interfaces/Item";
 import {Connection} from "../Connection";
-import {GAME_HEIGHT, GAME_WIDTH} from "../../config";
 import Image = Phaser.GameObjects.Image;
 
 // Turns power into light
@@ -18,7 +17,6 @@ export class Light extends Item {
 
         this.onSprite = this.scene.add.image(0, -15, 'light_on')
         this.overlay = this.scene.add.image(0, -20, 'light_overlay')
-        this.overlay.setBlendMode(1)
         this.add([this.overlay, this.onSprite])
         this.setOn(false, true)
     }
