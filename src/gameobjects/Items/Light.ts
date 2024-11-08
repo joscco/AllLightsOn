@@ -1,14 +1,26 @@
 import Phaser from "phaser";
 import {Item, GameBaseColor} from "../../interfaces/Item";
 import {Connection} from "../Connection";
+import {GAME_HEIGHT, GAME_WIDTH} from "../../config";
+import Image = Phaser.GameObjects.Image;
 
+// Turns power into light
 export class Light extends Item {
     private _isOn?: boolean;
+    private onSprite: Image
+    private overlay: Image
 
-    constructor(scene: Phaser.Scene, on: boolean) {
-        super(scene, null);
-        this.setOn(on)
+    constructor(scene: Phaser.Scene) {
+        super(scene, 'light_off');
         scene.add.existing(this)
+
+        this.sprite!.setPosition(0, -15)
+
+        this.onSprite = this.scene.add.image(0, -15, 'light_on')
+        this.overlay = this.scene.add.image(0, -20, 'light_overlay')
+        this.overlay.setBlendMode(1)
+        this.add([this.overlay, this.onSprite])
+        this.setOn(false, true)
     }
 
     getBaseColor(): GameBaseColor {
@@ -56,11 +68,22 @@ export class Light extends Item {
         return false
     }
 
-    private setOn(value: boolean) {
+    private setOn(value: boolean, instant: boolean = false) {
         this._isOn = value;
-        // this.sprite.setTexture(this._isOn
-        //     ? 'light_on'
-        //     : 'light_off');
+        let alphaValue = this._isOn ? 1 : 0
+
+        if (instant) {
+            this.onSprite.setAlpha(alphaValue)
+            this.overlay.setAlpha(alphaValue)
+        } else {
+            this.scene.tweens.add({
+                targets: [this.onSprite, this.overlay],
+                alpha: alphaValue,
+                duration: 200,
+                ease: Phaser.Math.Easing.Quadratic.InOut
+            })
+        }
+
 
     }
 
@@ -68,7 +91,9 @@ export class Light extends Item {
         return this._isOn ?? false;
     }
 
-    consume(): void {
-        this.setOn(true);
+    consume(incomingConnections: Connection[]): void {
+        if (incomingConnections.some(connection => connection.isDirectedWithPower())) {
+            this.setOn(true);
+        }
     }
 }

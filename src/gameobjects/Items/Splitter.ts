@@ -2,10 +2,11 @@ import Phaser from "phaser";
 import {Item, GameBaseColor} from "../../interfaces/Item";
 import {Connection} from "../Connection";
 
-export class And extends Item {
+// Links one source to multiple outputs
+export class Splitter extends Item {
 
     constructor(scene: Phaser.Scene) {
-        super(scene, 'toggle_on');
+        super(scene, '');
         scene.add.existing(this)
     }
 
@@ -17,17 +18,17 @@ export class And extends Item {
     }
 
     getNumberOfInputs(): number {
-        return 3
+        return 1
     }
     getNumberOfOutputs(): number {
-        return 1
+        return 2
     }
 
     getColWidth(): number {
-        return 3
+        return 1
     }
     getRowHeight(): number {
-        return 3
+        return 2
     }
 
     onClick() {

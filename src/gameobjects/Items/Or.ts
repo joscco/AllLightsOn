@@ -1,12 +1,23 @@
 import Phaser from "phaser";
-import {Item, GameBaseColor} from "../../interfaces/Item";
+import {Item, GameBaseColor, TEXT_COLOR_WHEN_ON, TEXT_COLOR_WHEN_OFF} from "../../interfaces/Item";
 import {Connection} from "../Connection";
+import Text = Phaser.GameObjects.Text;
 
+// Forwards power if any of the sources is on
 export class Or extends Item {
+    private text: Text
 
     constructor(scene: Phaser.Scene) {
-        super(scene, 'toggle_off');
+        super(scene, '');
         scene.add.existing(this)
+        this.text = scene.add.text(0, -5, 'OR', {
+            fontFamily: "Jersey",
+            fontSize: 40
+        })
+        this.text.setOrigin(0.5)
+        this.text.angle = -90
+        this.add(this.text)
+        this.setOn(false)
     }
 
     getBaseColor(): GameBaseColor {
@@ -14,32 +25,35 @@ export class Or extends Item {
     }
 
     reset() {
+        this.setOn(false)
     }
 
     getNumberOfInputs(): number {
-        return 3
+        return 2
     }
     getNumberOfOutputs(): number {
         return 1
     }
 
     getColWidth(): number {
-        return 2
+        return 1
     }
     getRowHeight(): number {
-        return 3
+        return 2
     }
 
     onClick() {
         return
     }
 
-    powerAvailableAfter(): boolean {
-        return true
+    powerAvailableAfter(incomingConnections: Connection[]): boolean {
+        return incomingConnections.length >= 1 &&
+            incomingConnections.some(connection => connection.isDirectedWithPower())
     }
 
-    powerForwardCanBeChecked(numberOfLeftConnections: Connection[]): boolean {
-        return true
+    powerForwardCanBeChecked(incomingConnections: Connection[]): boolean {
+        return incomingConnections.length >= 1 &&
+            incomingConnections.some(connection => connection.isDirectedWithPower())
     }
 
     isLightBulb(): boolean {
@@ -53,6 +67,14 @@ export class Or extends Item {
         return false
     }
 
-    consume(): void {
+    consume(incomingConnections: Connection[]): void {
+        if (incomingConnections.length >= 1 &&
+            incomingConnections.some(connection => connection.isDirectedWithPower())) {
+            this.setOn(true)
+        }
+    }
+
+    private setOn(value: boolean) {
+        this.text.setColor(value ? TEXT_COLOR_WHEN_ON : TEXT_COLOR_WHEN_OFF)
     }
 }

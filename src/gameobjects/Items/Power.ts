@@ -1,6 +1,7 @@
 import Phaser from "phaser";
-import {Item, GameBaseColor} from "../../interfaces/Item";
+import {Item, GameBaseColor, GameColors} from "../../interfaces/Item";
 
+// Produces power
 export class Power extends Item {
     constructor(scene: Phaser.Scene) {
         super(scene, 'power_on');
@@ -19,11 +20,11 @@ export class Power extends Item {
     }
 
     getColWidth(): number {
-        return 2
+        return 1
     }
 
     getRowHeight(): number {
-        return 2
+        return 1
     }
 
     reset() {

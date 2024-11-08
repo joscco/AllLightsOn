@@ -1,10 +1,11 @@
 import Phaser from "phaser";
-import {Item, GameBaseColor} from "../../interfaces/Item";
-import {Connection} from "../Connection";
+import {GameBaseColor, Item} from "../../interfaces/Item";
+import {Connection, PowerInfo} from "../Connection";
 
-export class Switch extends Item {
+// Allows stopping power flow
+export class Stopper extends Item {
+
     private _isOn: boolean = false;
-    // private anyPowerProvided: boolean = false;
     constructor(scene: Phaser.Scene, on: boolean) {
         super(scene, 'switch_on');
         this.setOn(on)
@@ -19,7 +20,7 @@ export class Switch extends Item {
     }
 
     reset() {
-        // this.anyPowerProvided = false
+
     }
 
     getBaseColor(): GameBaseColor {
@@ -27,20 +28,22 @@ export class Switch extends Item {
     }
 
     getColWidth(): number {
-        return 2
+        return 1
     }
 
     getRowHeight(): number {
         return 1
     }
 
-    powerAvailableAfter(): boolean {
-        return this.isOn()
+    powerAvailableAfter(incomingConnections: Connection[]): boolean {
+        return this.isOn() && incomingConnections[0].isDirectedWithPower()
     }
 
-    powerForwardCanBeChecked(numberOfLeftConnections: Connection[]): boolean {
-        return true
-        // return numberOfLeftConnections == 0 || this.anyPowerProvided
+    powerForwardCanBeChecked(incomingConnections: Connection[]): boolean {
+        return incomingConnections.length > 0
+            && (
+            incomingConnections.some(connection => connection.isDirectedWithPower()) ||
+            incomingConnections.every(connection => connection.getPowerInfo() != PowerInfo.NO_INFO))
     }
 
     isLightBulb(): boolean {
@@ -65,7 +68,7 @@ export class Switch extends Item {
 
     setOn(value: boolean) {
         this._isOn = value;
-        this.sprite.setTexture(this._isOn
+        this.sprite!.setTexture(this._isOn
             ? 'switch_on'
             : 'switch_off');
     }

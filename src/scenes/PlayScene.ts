@@ -1,19 +1,23 @@
 import Phaser from 'phaser';
 import {Light} from "../gameobjects/Items/Light";
 import {Power} from "../gameobjects/Items/Power";
-import {Switch} from "../gameobjects/Items/Switch";
+import {Stopper} from "../gameobjects/Items/Stopper";
 import {GAME_HEIGHT, GAME_WIDTH} from "../config";
 import {Grid} from "../gameobjects/Grid";
-import {Connection} from "../gameobjects/Connection";
+import {Connection, PowerInfo} from "../gameobjects/Connection";
 import {Item} from "../interfaces/Item";
 import {Vec2, vec2Equals} from "../Helpers/VecMath";
 import {Or} from "../gameobjects/Items/Or";
 import {AStarFinder} from "../AStar/AStarFinder";
+import {And} from "../gameobjects/Items/And";
+import {Not} from "../gameobjects/Items/Not";
+import {Splitter} from "../gameobjects/Items/Splitter";
+import {SwitchIn} from "../gameobjects/Items/SwitchIn";
+import {SwitchOut} from "../gameobjects/Items/SwitchOut";
 import Vector2 = Phaser.Math.Vector2;
 
 
 export default class PlayScene extends Phaser.Scene {
-    private static GRID_UNIT_SIZE = 40
     private grid?: Grid
     private pathFinder?: AStarFinder
 
@@ -27,16 +31,15 @@ export default class PlayScene extends Phaser.Scene {
     }
 
     create() {
-        let text = this.add.text(GAME_WIDTH / 2, 100, "Put all lights on.", {
-            fontFamily: "LondrinaThin",
+        let text = this.add.text(GAME_WIDTH / 2, 100, "> PUT ALL LIGHTS ON.", {
+            fontFamily: "Jersey",
             fontSize: 60
         })
         text.setOrigin(0.5, 0.5)
         this.grid = new Grid(
             this,
             GAME_WIDTH / 2, GAME_HEIGHT / 2,
-            18, 16,
-            PlayScene.GRID_UNIT_SIZE, PlayScene.GRID_UNIT_SIZE)
+            18, 16)
         this.grid.showGrid()
         this.pathFinder = new AStarFinder();
 
@@ -44,14 +47,40 @@ export default class PlayScene extends Phaser.Scene {
         dragContainer.setInteractive()
         this.defineItemLogic();
 
-        this.grid.addItemAtIndex({x: -8, y: -5}, new Power(this))
-        this.grid.addItemAtIndex({x: -8, y: 0}, new Power(this))
-        this.grid.addItemAtIndex({x: -8, y: 5}, new Power(this))
-        this.grid.addItemAtIndex({x: -3, y: -5}, new Switch(this, false))
-        this.grid.addItemAtIndex({x: -3, y: 0}, new Switch(this, false))
-        this.grid.addItemAtIndex({x: -3, y: 5}, new Switch(this, false))
-        this.grid.addItemAtIndex({x: 3, y: 0}, new Or(this))
-        this.grid.addItemAtIndex({x: 8, y: 0}, new Light(this, false))
+        // Simple
+        this.grid.addItemAtIndex({x: -5, y: -8}, new Power(this))
+        this.grid.addItemAtIndex({x: 5, y: -8}, new Light(this))
+
+        // Stopper
+        this.grid.addItemAtIndex({x: -5, y: -6}, new Power(this))
+        this.grid.addItemAtIndex({x: -2, y: -6}, new Stopper(this, false))
+        this.grid.addItemAtIndex({x: 5, y: -6}, new Light(this))
+
+        // Not
+        this.grid.addItemAtIndex({x: -5, y: -4}, new Power(this))
+        this.grid.addItemAtIndex({x: -2, y: -4}, new Stopper(this, false))
+        this.grid.addItemAtIndex({x: 1, y: -4}, new Not(this))
+        this.grid.addItemAtIndex({x: 5, y: -4}, new Light(this))
+
+        // Or
+        this.grid.addItemAtIndex({x: -5, y: -2}, new Power(this))
+        this.grid.addItemAtIndex({x: -5, y: 0}, new Power(this))
+        this.grid.addItemAtIndex({x: -2, y: -2}, new Stopper(this, false))
+        this.grid.addItemAtIndex({x: -2, y:0}, new Stopper(this, false))
+        this.grid.addItemAtIndex({x: 1, y: -2}, new Or(this))
+        this.grid.addItemAtIndex({x: 5, y: -2}, new Light(this))
+
+        // And
+        this.grid.addItemAtIndex({x: -5, y: 2}, new Power(this))
+        this.grid.addItemAtIndex({x: -5, y: 4}, new Power(this))
+        this.grid.addItemAtIndex({x: -2, y: 2}, new Stopper(this, false))
+        this.grid.addItemAtIndex({x: -2, y:4}, new Stopper(this, false))
+        this.grid.addItemAtIndex({x: 1, y: 2}, new And(this))
+        this.grid.addItemAtIndex({x: 5, y: 2}, new Light(this))
+
+        // this.grid.addItemAtIndex({x: -8, y: -3}, new Splitter(this))
+        // this.grid.addItemAtIndex({x: -1, y: -3}, new SwitchIn(this, false))
+        // this.grid.addItemAtIndex({x: 3, y: -3}, new SwitchOut(this, false))
     }
 
     update(time: number) {
@@ -203,10 +232,10 @@ export default class PlayScene extends Phaser.Scene {
 
     checkSources() {
         this.grid!.getItems().forEach(item => item.reset())
-        this.grid!.getConnections().forEach(connection => connection.setDirectedWithPower(false))
+        this.grid!.getConnections().forEach(connection => connection.setDirectedWithPower(PowerInfo.NO_INFO))
 
         for (let powerSource of this.grid!.getPowerSources()) {
-            this.forwardPower(powerSource, this.grid!.getConnections());
+            this.forwardPower(PowerInfo.POWER_ON, powerSource, this.grid!.getConnections());
         }
 
         if (this.grid!.getItems().filter(item => item.isLightBulb()).every(bulb => (bulb as Light).isOn())) {
@@ -215,25 +244,24 @@ export default class PlayScene extends Phaser.Scene {
         }
     }
 
-    private forwardPower(source: Item, connections: Connection[]) {
+    private forwardPower(powerInfo: PowerInfo, source: Item, connections: Connection[]) {
         // Also non powers have to be forwarded!
-        let leftUndirectedConnections = connections.filter(connection => !connection.isDirectedWithPower())
+        let leftUndirectedConnections = connections.filter(connection => connection.getPowerInfo() == PowerInfo.NO_INFO)
         for (let connection of leftUndirectedConnections) {
             if (connection.getSource() == source) {
                 let consumer = connection.getConsumer()!
-                connection.setDirectedWithPower(true)
-                consumer.consume()
+                connection.setDirectedWithPower(powerInfo)
 
                 // We need to check here how much power is supplied
                 // Here are only those relevant that can provide energy!
                 let incomingConnections = this.grid!.getConnectionsFor(consumer)
                     .filter(connection => connection.getConsumer() == consumer)
+                consumer.consume(incomingConnections)
 
                 if (consumer.isPowerForwarder() && consumer.powerForwardCanBeChecked(incomingConnections)) {
                     let powerProvidedAfter = consumer.powerAvailableAfter(incomingConnections)
-                    if (powerProvidedAfter) {
-                        this.forwardPower(consumer, leftUndirectedConnections)
-                    }
+                    let nextPowerInfo = powerProvidedAfter ? PowerInfo.POWER_ON : PowerInfo.POWER_OFF;
+                    this.forwardPower(nextPowerInfo, consumer, leftUndirectedConnections)
                 }
             }
         }

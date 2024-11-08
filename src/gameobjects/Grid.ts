@@ -15,16 +15,14 @@ export type ConnectorInUsed = {
     isInput: boolean
 }
 
-export const GRID_POINT_SIZE = 5
+export const GRID_UNIT_SIZE = 45
+export const GRID_POINT_SIZE = 4
 export const CONNECTOR_INSIDE_POINT_SIZE = 8
-export const CONNECTOR_POINT_SIZE = 12
 export const ELECTRON_SIZE = 8
 
 export const GRID_POINT_COLOR = GameColors.BLUE
-export const IN_CONNECTOR_COLOR = GameColors.RED
 export const IN_CONNECTOR_INNER_USED_COLOR = GameColors.DARK_BLUE
 export const IN_CONNECTOR_INNER_UNUSED_COLOR = GameColors.DARK_BLUE
-export const OUT_CONNECTOR_COLOR = GameColors.LIGHT_ORANGE
 export const OUT_CONNECTOR_INNER_USED_COLOR = GameColors.DARK_BLUE
 export const OUT_CONNECTOR_INNER_UNUSED_COLOR = GameColors.DARK_BLUE
 export const UNUSED_CONNECTION_COLOR = GameColors.ORANGE
@@ -55,19 +53,16 @@ export class Grid implements AStarGrid {
     private itemLayer: Layer
     private itemMap: Vector2Dict<Item> = new Vector2Dict()
 
-    // Depth 2
-    private inConnectorGraphics: Graphics
-    private outConnectorGraphics: Graphics
     private inConnectorMap: Vector2Dict<ConnectorInUsed> = new Vector2Dict()
     private outConnectorMap: Vector2Dict<ConnectorInUsed> = new Vector2Dict()
     private connectorImages: Container
     private connectorPointLayer: Layer
 
-    // Depth 3
+    // Depth 2
     private connections: Connection[] = []
     private connectionLayer: Layer
 
-    constructor(scene: Scene, centerX: number, centerY: number, columns: number, rows: number, colWidth: number, rowWidth: number) {
+    constructor(scene: Scene, centerX: number, centerY: number, columns: number, rows: number) {
         this.scene = scene
         this.x = centerX
         this.y = centerY
@@ -77,8 +72,8 @@ export class Grid implements AStarGrid {
         this.maxColIndex = columns / 2
         this.minRowIndex = -rows / 2
         this.maxRowIndex = rows / 2
-        this.colWidth = colWidth
-        this.rowWidth = rowWidth
+        this.colWidth = GRID_UNIT_SIZE
+        this.rowWidth = GRID_UNIT_SIZE
         this.evenColsOffset = (this.columns % 2 == 0) ? this.colWidth / 2 : 0
         this.evenRowsOffset = (this.rows % 2 == 0) ? this.rowWidth / 2 : 0
 
@@ -90,16 +85,8 @@ export class Grid implements AStarGrid {
         this.updateGridRender()
 
         // Set up connectors
-        this.inConnectorGraphics = this.scene.add.graphics({
-            fillStyle: {color: IN_CONNECTOR_COLOR},
-            lineStyle: {color: IN_CONNECTOR_COLOR, width: 2 * CONNECTOR_POINT_SIZE}
-        })
-        this.outConnectorGraphics = this.scene.add.graphics({
-            fillStyle: {color: OUT_CONNECTOR_COLOR},
-            lineStyle: {color: OUT_CONNECTOR_COLOR, width: 2 * CONNECTOR_POINT_SIZE}
-        })
         this.connectorImages = this.scene.add.container()
-        this.connectorPointLayer = this.scene.add.layer([this.inConnectorGraphics, this.outConnectorGraphics, this.connectorImages])
+        this.connectorPointLayer = this.scene.add.layer([this.connectorImages])
         this.connectorPointLayer.setDepth(1)
 
         // Set up connections
@@ -183,31 +170,24 @@ export class Grid implements AStarGrid {
         }
         let center = this.getPositionForIndex(centerIndex)
         item.setPosition(center.x, center.y)
+        item.setDepth(bottomLeftIndex.y)
 
 
         // Set connectors
         let leftBottomIndex = {x: bottomLeftIndex.x, y: bottomLeftIndex.y}
         for (let i = 0; i < item.getNumberOfInputs(); i++) {
             let offsetIndex = vec2Add(leftBottomIndex, {x: -1, y: i})
-            let offsetOneRightIndex = vec2Add(leftBottomIndex, {x: 0, y: i})
             let offsetPosition = this.getPositionForIndex(offsetIndex)
-            let offsetOneRightPosition = this.getPositionForIndex(offsetOneRightIndex)
             this.inConnectorMap.set(offsetIndex, {item: item, used: false, isInput: true})
-            this.inConnectorGraphics.lineBetween(offsetPosition.x, offsetPosition.y, offsetOneRightPosition.x, offsetOneRightPosition.y)
-            this.inConnectorGraphics.fillCircle(offsetPosition.x, offsetPosition.y, CONNECTOR_POINT_SIZE)
-            this.connectorImages.add(this.scene.add.image(offsetPosition.x + 2, offsetPosition.y, 'plus_pole'))
+            this.connectorImages.add(this.scene.add.image(offsetPosition.x + 24, offsetPosition.y, 'connector_plus'))
         }
 
         let rightTopIndex = {x: bottomLeftIndex.x + item.getColWidth() - 1, y: bottomLeftIndex.y}
         for (let j = 0; j < item.getNumberOfOutputs(); j++) {
             let offsetIndex = vec2Add(rightTopIndex, {x: 1, y: j})
-            let offsetOneLeftIndex = vec2Add(leftBottomIndex, {x: 0, y: j})
             let offsetPosition = this.getPositionForIndex(offsetIndex)
-            let offsetOneLeftPosition = this.getPositionForIndex(offsetOneLeftIndex)
             this.outConnectorMap.set(offsetIndex, {item: item, used: false, isInput: false})
-            this.outConnectorGraphics.lineBetween(offsetPosition.x, offsetPosition.y, offsetOneLeftPosition.x, offsetOneLeftPosition.y)
-            this.outConnectorGraphics.fillCircle(offsetPosition.x, offsetPosition.y, CONNECTOR_POINT_SIZE)
-            this.connectorImages.add(this.scene.add.image(offsetPosition.x - 2, offsetPosition.y, 'minus_pole'))
+            this.connectorImages.add(this.scene.add.image(offsetPosition.x - 24, offsetPosition.y, 'connector_minus'))
         }
     }
 
@@ -240,7 +220,7 @@ export class Grid implements AStarGrid {
                 var index = {x: x, y: y}
                 var pos = this.getPositionForIndex(index)
                 if (!this.itemMap.has(index)) {
-                    this.gridPointGraphics.fillPoint(pos.x, pos.y, GRID_POINT_SIZE)
+                    this.gridPointGraphics.fillCircle(pos.x, pos.y, GRID_POINT_SIZE)
                 }
 
             }

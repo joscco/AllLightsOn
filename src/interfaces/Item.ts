@@ -22,43 +22,42 @@ export const GameColors = {
     LIGHT: 0xfae8d5
 }
 
+export const GameColorStrings = {
+    BLUE: '#1b3953',
+    DARK_BLUE: '#112941',
+    DARK: '#091b2f',
+    RED: '#c77e58',
+    DARK_RED: '#a96544',
+    ORANGE: '#eca360',
+    LIGHT_ORANGE: '#f5d0a1',
+    LIGHT: '#fae8d5'
+}
+
+export const TEXT_COLOR_WHEN_ON = GameColorStrings.LIGHT
+export const TEXT_COLOR_WHEN_OFF = GameColorStrings.DARK
+
 export abstract class Item extends Container {
 
     protected base: NineSlice
     protected sprite?: Image
-    protected insGraphics: Graphics
-    protected outsGraphics: Graphics
 
     constructor(scene: Scene, texture: string | null) {
         super(scene, 0, 0);
         // Slight offset to top because of the bottom border
         var baseTexture = this.getBaseTexture()
-        this.base = scene.add.nineslice(0, 5, baseTexture, 0, 0, 0, 25, 25, 25, 25)
+        this.base = scene.add.nineslice(0, 0, baseTexture, 0, 0, 0, 10, 10, 10, 10)
         this.add(this.base)
 
         if (texture) {
-            this.sprite = scene.add.image(0, -1, texture)
+            this.sprite = scene.add.image(0, -5, texture)
             this.add(this.sprite)
         }
-
-
-        this.insGraphics = scene.add.graphics({
-            fillStyle: {
-                color: GameColors.DARK
-            }
-        })
-        this.outsGraphics = scene.add.graphics({
-            fillStyle: {
-                color: GameColors.LIGHT
-            }
-        })
-        this.add([this.insGraphics, this.outsGraphics])
     }
 
     setWithUnitSize(gridUnitSize: number) {
         // Little less size to make it quadratic with bottom
         var width = gridUnitSize * (this.getColWidth()) + 5
-        var height = gridUnitSize * (this.getRowHeight())
+        var height = gridUnitSize * (this.getRowHeight()) + 5
         this.base.setSize(width, height)
     }
 
@@ -86,15 +85,15 @@ export abstract class Item extends Container {
     // Electricity stuff
     abstract reset(): void
 
-    // Consume power
-    abstract consume(): void;
-
     // Can this partner generally forward power?
     abstract isPowerForwarder(): boolean
 
     abstract isPowerSource(): boolean
 
     abstract isLightBulb(): boolean
+
+    // Consume power
+    abstract consume(incomingConnections: Connection[]): void;
 
     // Can this partner forward now if power is available
     abstract powerAvailableAfter(incomingConnections: Connection[]): boolean;

@@ -1,9 +1,10 @@
 import Phaser from "phaser";
-import {Item, GameColors} from "../interfaces/Item";
+import {GameColors, Item} from "../interfaces/Item";
 import {mod, Vec2, vec2Equals, vec2Mean} from "../Helpers/VecMath";
 import {
     CONNECTOR_INSIDE_POINT_SIZE,
-    ELECTRON_COLOR, ELECTRON_SIZE,
+    ELECTRON_COLOR,
+    ELECTRON_SIZE,
     IN_CONNECTOR_INNER_UNUSED_COLOR,
     IN_CONNECTOR_INNER_USED_COLOR,
     OUT_CONNECTOR_INNER_UNUSED_COLOR,
@@ -17,12 +18,18 @@ import Line = Phaser.Curves.Line;
 import Vector2 = Phaser.Math.Vector2;
 import Path = Phaser.Curves.Path;
 
+export enum PowerInfo {
+    NO_INFO,
+    POWER_OFF,
+    POWER_ON
+}
+
 export class Connection extends Graphics {
     private indexPath: Vec2[] = []
     private posPath: Vec2[] = []
     private start?: Item
     private end?: Item
-    private directedWithPower: boolean = false
+    private directedWithPower: PowerInfo = PowerInfo.NO_INFO
 
     // Only set after connection is added
     private source?: Item
@@ -40,7 +47,6 @@ export class Connection extends Graphics {
     constructor(scene: Phaser.Scene) {
         super(scene)
         scene.add.existing(this)
-        this.setDirectedWithPower(false)
         this.lastElectronChange = scene.time.now
         this.electronGraphics = scene.add.graphics({
             fillStyle: {
@@ -71,10 +77,14 @@ export class Connection extends Graphics {
     }
 
     isDirectedWithPower(): boolean {
-        return this.directedWithPower;
+        return this.directedWithPower == PowerInfo.POWER_ON;
     }
 
-    setDirectedWithPower(val: boolean) {
+    getPowerInfo(): PowerInfo {
+        return this.directedWithPower
+    }
+
+    setDirectedWithPower(val: PowerInfo) {
         this.directedWithPower = val
         this.draw()
     }
@@ -88,7 +98,7 @@ export class Connection extends Graphics {
         // Clearing path
         this.clear()
         // Setting color
-        if (this.isDirectedWithPower()) {
+        if (this.getPowerInfo() == PowerInfo.POWER_ON) {
             this.lineStyle(7, USED_CONNECTION_COLOR)
         } else {
             this.lineStyle(7, UNUSED_CONNECTION_COLOR)
@@ -138,7 +148,6 @@ export class Connection extends Graphics {
                 this.fillCircle(sourcePosition.x, sourcePosition.y, CONNECTOR_INSIDE_POINT_SIZE)
                 this.fillStyle(IN_CONNECTOR_INNER_USED_COLOR)
                 this.fillCircle(consumerPosition.x, consumerPosition.y, CONNECTOR_INSIDE_POINT_SIZE)
-
             } else {
                 this.showingElectrons = false
                 this.electronGraphics.clear()
