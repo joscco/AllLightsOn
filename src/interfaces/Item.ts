@@ -1,9 +1,9 @@
 import Image = Phaser.GameObjects.Image;
 import TweenChain = Phaser.Tweens.TweenChain;
-import {Scene} from "phaser";
 import Container = Phaser.GameObjects.Container;
-import {Connection} from "../gameobjects/Connection";
-import NineSlice = Phaser.GameObjects.NineSlice;
+import {Scene} from "phaser";
+import {Connection, PowerInfo} from "../gameobjects/Connection";
+import {Vec2} from "../Helpers/VecMath";
 
 export enum GameBaseColor {
     ORANGE,
@@ -36,9 +36,12 @@ export const TEXT_COLOR_WHEN_ON = GameColorStrings.LIGHT
 export const TEXT_COLOR_WHEN_OFF = GameColorStrings.DARK
 
 export abstract class Item extends Container {
-
     protected base: Image
     protected sprite?: Image
+    protected index?: Vec2
+    protected incomingConnectorIndices: Vec2[] = []
+    protected outgoingConnectorIndices: Vec2[] = []
+    private wiggleTween?: TweenChain
 
     constructor(scene: Scene, texture: string | null) {
         super(scene, 0, 0);
@@ -50,6 +53,26 @@ export abstract class Item extends Container {
             this.sprite = scene.add.image(0, -5, texture)
             this.add(this.sprite)
         }
+    }
+
+    setIndex(leftBottomIndex: Vec2) {
+        this.index = leftBottomIndex
+    }
+
+    addIncomingConnectorIndex(index: Vec2) {
+        this.incomingConnectorIndices.push(index)
+    }
+
+    addOutgoingConnectorIndex(index: Vec2) {
+        this.outgoingConnectorIndices.push(index)
+    }
+
+    getIncomingConnectorIndices() {
+        return this.incomingConnectorIndices
+    }
+
+    getOutcomingConnectorIndices() {
+        return this.outgoingConnectorIndices
     }
 
     setWithUnitSize(gridUnitSize: number) {
@@ -77,8 +100,6 @@ export abstract class Item extends Container {
     abstract getColWidth(): number
 
     abstract getRowHeight(): number
-
-    private wiggleTween?: TweenChain
 
     // Electricity stuff
     abstract reset(): void
@@ -131,5 +152,9 @@ export abstract class Item extends Container {
                 ease: Phaser.Math.Easing.Quadratic.InOut,
             }]
         })
+    }
+
+    allowsForwarding(powerInfo: PowerInfo, outgoingConnection: Connection) {
+        return true;
     }
 }

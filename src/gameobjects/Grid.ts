@@ -179,6 +179,7 @@ export class Grid implements AStarGrid {
         }
         let center = this.getPositionForIndex(centerIndex)
         item.setPosition(center.x, center.y)
+        item.setIndex(bottomLeftIndex)
         item.setDepth(bottomLeftIndex.y)
 
 
@@ -186,6 +187,7 @@ export class Grid implements AStarGrid {
         let leftBottomIndex = {x: bottomLeftIndex.x, y: bottomLeftIndex.y}
         for (let i = 0; i < item.getNumberOfInputs(); i++) {
             let offsetIndex = vec2Add(leftBottomIndex, {x: -1, y: i})
+            item.addIncomingConnectorIndex(offsetIndex)
             let offsetPosition = this.getPositionForIndex(offsetIndex)
             this.inConnectorMap.set(offsetIndex, {item: item, used: false, isInput: true})
             this.connectorImages.add(this.scene.add.image(offsetPosition.x + 24, offsetPosition.y, 'connector_plus'))
@@ -194,6 +196,7 @@ export class Grid implements AStarGrid {
         let rightTopIndex = {x: bottomLeftIndex.x + item.getColWidth() - 1, y: bottomLeftIndex.y}
         for (let j = 0; j < item.getNumberOfOutputs(); j++) {
             let offsetIndex = vec2Add(rightTopIndex, {x: 1, y: j})
+            item.addOutgoingConnectorIndex(offsetIndex)
             let offsetPosition = this.getPositionForIndex(offsetIndex)
             this.outConnectorMap.set(offsetIndex, {item: item, used: false, isInput: false})
             this.connectorImages.add(this.scene.add.image(offsetPosition.x - 24, offsetPosition.y, 'connector_minus'))

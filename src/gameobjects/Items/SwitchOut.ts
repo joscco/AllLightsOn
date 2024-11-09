@@ -1,12 +1,12 @@
 import Phaser from "phaser";
 import {Item, GameBaseColor} from "../../interfaces/Item";
-import {Connection} from "../Connection";
+import {Connection, PowerInfo} from "../Connection";
+import {vec2Equals} from "../../Helpers/VecMath";
 
 // Allows switching between multiple outputs
 export class SwitchOut extends Item {
     private useUpper: boolean = false;
 
-    // TODO: This needs reference to connectors!
     constructor(scene: Phaser.Scene, upper: boolean) {
         super(scene, 'switch_up_off');
         this.setUpper(upper)
@@ -36,13 +36,20 @@ export class SwitchOut extends Item {
         return 2
     }
 
-    powerAvailableAfter(): boolean {
-        return this.isUpper()
+    allowsForwarding(powerInfo: PowerInfo, outgoingConnection: Connection): boolean {
+        let [upperOutgoingIndex, lowerOutgoingIndex] = this.getOutcomingConnectorIndices().sort((a, b) => a.y - b.y)
+        if (this.useUpper) {
+            return vec2Equals(outgoingConnection.getSourceIndex()!, upperOutgoingIndex)
+        }
+        return vec2Equals(outgoingConnection.getSourceIndex()!, lowerOutgoingIndex)
     }
 
-    powerForwardCanBeChecked(numberOfLeftConnections: Connection[]): boolean {
-        return true
-        // return numberOfLeftConnections == 0 || this.anyPowerProvided
+    powerAvailableAfter(incomingConnections: Connection[]): boolean {
+        return incomingConnections.some(connection => connection.isDirectedWithPower())
+    }
+
+    powerForwardCanBeChecked(incomingConnections: Connection[]): boolean {
+        return incomingConnections.some(connection => connection.isDirectedWithPower())
     }
 
     isLightBulb(): boolean {

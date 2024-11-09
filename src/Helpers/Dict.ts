@@ -42,7 +42,7 @@ export class Dict<K, V> {
 
     getEntriesWith(lamda?: (k: K, v: V) => boolean): Array<[K, V]> {
         let entries: [K, V][] = []
-        for (let [id, [key, value]] of this.map.entries()) {
+        for (let [_, [key, value]] of this.map.entries()) {
             if (!lamda || lamda(key, value)) {
                 entries.push([key, value])
             }
@@ -52,7 +52,7 @@ export class Dict<K, V> {
 
     values(): Array<V> {
         let entries: V[] = []
-        for (let [id, [key, value]] of this.map.entries()) {
+        for (let [_id, [_key, value]] of this.map.entries()) {
             entries.push(value)
         }
         return entries
@@ -60,7 +60,7 @@ export class Dict<K, V> {
 
     keys(): Array<K> {
         let entries: K[] = []
-        for (let [id, [key, value]] of this.map.entries()) {
+        for (let [_id, [key, _value]] of this.map.entries()) {
             entries.push(key)
         }
         return entries

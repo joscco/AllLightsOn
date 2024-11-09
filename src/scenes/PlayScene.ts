@@ -248,7 +248,7 @@ export default class PlayScene extends Phaser.Scene {
         // Also non powers have to be forwarded!
         let leftUndirectedConnections = connections.filter(connection => connection.getPowerInfo() == PowerInfo.NO_INFO)
         for (let connection of leftUndirectedConnections) {
-            if (connection.getSource() == source) {
+            if (connection.getSource() == source && source.allowsForwarding(powerInfo, connection)) {
                 let consumer = connection.getConsumer()!
                 connection.setDirectedWithPower(powerInfo)
 

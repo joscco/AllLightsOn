@@ -1,12 +1,12 @@
 import Phaser from "phaser";
-import {Item, GameBaseColor} from "../../interfaces/Item";
-import {Connection} from "../Connection";
+import {GameBaseColor, Item} from "../../interfaces/Item";
+import {Connection, PowerInfo} from "../Connection";
+import {vec2Equals} from "../../Helpers/VecMath";
 
 // Allows switching between multiple inputs
 export class SwitchIn extends Item {
     private useUpper: boolean = false;
 
-    // TODO: This needs reference to connectors!
     constructor(scene: Phaser.Scene, upper: boolean) {
         super(scene, 'switch_up_off');
         this.setUseUpper(upper)
@@ -37,14 +37,23 @@ export class SwitchIn extends Item {
     }
 
     powerAvailableAfter(incomingConnections: Connection[]): boolean {
-        return this.isUsingUpper()
+        let [upperConnectorIndex, lowerConnectorIndex] = this.getIncomingConnectorIndices().sort((a, b) => a.y - b.y)
+        let upperConnection = incomingConnections.find(c => vec2Equals(c.getConsumerIndex()!, upperConnectorIndex))
+        let lowerConnection = incomingConnections.find(c => vec2Equals(c.getConsumerIndex()!, lowerConnectorIndex))
+        if (this.useUpper) {
+            return !!upperConnection && (upperConnection.isDirectedWithPower())
+        }
+        return !!lowerConnection && (lowerConnection.isDirectedWithPower())
     }
 
     powerForwardCanBeChecked(incomingConnections: Connection[]): boolean {
+        let [upperConnectorIndex, lowerConnectorIndex] = this.getIncomingConnectorIndices().sort((a, b) => a.y - b.y)
+        let upperConnection = incomingConnections.find(c => vec2Equals(c.getConsumerIndex()!, upperConnectorIndex))
+        let lowerConnection = incomingConnections.find(c => vec2Equals(c.getConsumerIndex()!, lowerConnectorIndex))
         if (this.useUpper) {
-            return false
+            return !!upperConnection && (upperConnection.getPowerInfo() != PowerInfo.NO_INFO)
         }
-        return true
+        return !!lowerConnection && (lowerConnection.getPowerInfo() != PowerInfo.NO_INFO)
     }
 
     isLightBulb(): boolean {

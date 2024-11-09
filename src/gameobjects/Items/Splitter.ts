@@ -36,11 +36,11 @@ export class Splitter extends Item {
     }
 
     powerAvailableAfter(incomingConnections: Connection[]): boolean {
-        return incomingConnections.every(connection => connection.isDirectedWithPower())
+        return incomingConnections.some(connection => connection.isDirectedWithPower())
     }
 
     powerForwardCanBeChecked(incomingConnections: Connection[]): boolean {
-        return incomingConnections.every(connection => connection.isDirectedWithPower())
+        return incomingConnections.some(connection => connection.isDirectedWithPower())
     }
 
     isLightBulb(): boolean {

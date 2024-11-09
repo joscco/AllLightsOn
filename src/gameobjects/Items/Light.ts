@@ -1,4 +1,4 @@
-import Phaser, {BlendModes} from "phaser";
+import Phaser from "phaser";
 import {GameBaseColor, Item} from "../../interfaces/Item";
 import {Connection} from "../Connection";
 import Image = Phaser.GameObjects.Image;
