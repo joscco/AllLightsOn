@@ -99,6 +99,8 @@ export default class PlayScene extends Phaser.Scene {
         if (item && (!this.connection || item == this.connection?.getStart())) {
             item.onClick()
             this.checkSources()
+            this.connection?.destroy()
+            this.connection = undefined
         } else if (this.connection) {
             if (this.connection.getStart() && this.connection.getEnd() && !this.grid!.hasConnection(this.connection)) {
                 this.grid!.addConnection(this.connection)

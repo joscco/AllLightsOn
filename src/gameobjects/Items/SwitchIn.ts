@@ -6,11 +6,13 @@ import {vec2Equals} from "../../Helpers/VecMath";
 // Allows switching between multiple inputs
 export class SwitchIn extends Item {
     private useUpper: boolean = false;
+    private isAbleToForward: boolean = false
 
     constructor(scene: Phaser.Scene, upper: boolean) {
         super(scene, 'switch_up_off');
         this.setUseUpper(upper)
         scene.add.existing(this)
+        this.setAbleToForward(false)
     }
 
     getNumberOfInputs(): number {
@@ -21,7 +23,7 @@ export class SwitchIn extends Item {
     }
 
     reset() {
-        // this.anyPowerProvided = false
+        this.setAbleToForward(false)
     }
 
     getBaseColor(): GameBaseColor {
@@ -40,10 +42,14 @@ export class SwitchIn extends Item {
         let [upperConnectorIndex, lowerConnectorIndex] = this.getIncomingConnectorIndices().sort((a, b) => a.y - b.y)
         let upperConnection = incomingConnections.find(c => vec2Equals(c.getConsumerIndex()!, upperConnectorIndex))
         let lowerConnection = incomingConnections.find(c => vec2Equals(c.getConsumerIndex()!, lowerConnectorIndex))
+        let availableAfter: boolean
         if (this.useUpper) {
-            return !!upperConnection && (upperConnection.isDirectedWithPower())
+            availableAfter = !!upperConnection && (upperConnection.isDirectedWithPower())
+        } else {
+            availableAfter = !!lowerConnection && (lowerConnection.isDirectedWithPower())
         }
-        return !!lowerConnection && (lowerConnection.isDirectedWithPower())
+        this.setAbleToForward(availableAfter)
+        return availableAfter
     }
 
     powerForwardCanBeChecked(incomingConnections: Connection[]): boolean {
@@ -56,16 +62,16 @@ export class SwitchIn extends Item {
         return !!lowerConnection && (lowerConnection.getPowerInfo() != PowerInfo.NO_INFO)
     }
 
+    onClick() {
+        this.setUseUpper(!this.useUpper)
+    }
+
     isLightBulb(): boolean {
         return false
     }
 
     isPowerForwarder(): boolean {
         return true
-    }
-
-    onClick() {
-        this.setUseUpper(!this.isUsingUpper())
     }
 
     isPowerSource(): boolean {
@@ -76,14 +82,14 @@ export class SwitchIn extends Item {
         return
     }
 
-    setUseUpper(value: boolean) {
-        this.useUpper = value;
+    setAbleToForward(ableToForward: boolean) {
+        this.isAbleToForward = ableToForward
         this.sprite!.setTexture(this.useUpper
-            ? 'switch_up_off'
-            : 'switch_down_off');
+            ? (this.isAbleToForward ? 'switch_up_on' : 'switch_up_off')
+            : (this.isAbleToForward ? 'switch_down_on' : 'switch_down_off'))
     }
 
-    isUsingUpper(): boolean {
-        return this.useUpper;
+    setUseUpper(value: boolean) {
+        this.useUpper = value;
     }
 }

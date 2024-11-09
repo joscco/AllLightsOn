@@ -1,27 +1,30 @@
 import Phaser from "phaser";
-import {Item, GameBaseColor} from "../../interfaces/Item";
+import {GameBaseColor, Item} from "../../interfaces/Item";
 import {Connection, PowerInfo} from "../Connection";
 import {vec2Equals} from "../../Helpers/VecMath";
 
 // Allows switching between multiple outputs
 export class SwitchOut extends Item {
     private useUpper: boolean = false;
+    private isAbleToForward: boolean = false
 
     constructor(scene: Phaser.Scene, upper: boolean) {
         super(scene, 'switch_up_off');
         this.setUpper(upper)
         scene.add.existing(this)
+        this.setAbleToForward(false)
     }
 
     getNumberOfInputs(): number {
         return 1
     }
+
     getNumberOfOutputs(): number {
         return 2
     }
 
     reset() {
-        // this.anyPowerProvided = false
+        this.setAbleToForward(false)
     }
 
     getBaseColor(): GameBaseColor {
@@ -40,16 +43,23 @@ export class SwitchOut extends Item {
         let [upperOutgoingIndex, lowerOutgoingIndex] = this.getOutcomingConnectorIndices().sort((a, b) => a.y - b.y)
         if (this.useUpper) {
             return vec2Equals(outgoingConnection.getSourceIndex()!, upperOutgoingIndex)
+        } else {
+            return vec2Equals(outgoingConnection.getSourceIndex()!, lowerOutgoingIndex)
         }
-        return vec2Equals(outgoingConnection.getSourceIndex()!, lowerOutgoingIndex)
     }
 
     powerAvailableAfter(incomingConnections: Connection[]): boolean {
-        return incomingConnections.some(connection => connection.isDirectedWithPower())
+        let availableAfter = incomingConnections.some(connection => connection.isDirectedWithPower())
+        this.setAbleToForward(availableAfter)
+        return availableAfter
     }
 
     powerForwardCanBeChecked(incomingConnections: Connection[]): boolean {
         return incomingConnections.some(connection => connection.isDirectedWithPower())
+    }
+
+    onClick() {
+        this.setUpper(!this.useUpper)
     }
 
     isLightBulb(): boolean {
@@ -60,10 +70,6 @@ export class SwitchOut extends Item {
         return true
     }
 
-    onClick() {
-        this.setUpper(!this.isUpper())
-    }
-
     isPowerSource(): boolean {
         return false
     }
@@ -72,14 +78,14 @@ export class SwitchOut extends Item {
         return
     }
 
-    setUpper(value: boolean) {
-        this.useUpper = value;
+    setAbleToForward(ableToForward: boolean) {
+        this.isAbleToForward = ableToForward
         this.sprite!.setTexture(this.useUpper
-            ? 'switch_up_off'
-            : 'switch_down_off');
+            ? (this.isAbleToForward ? 'switch_up_on' : 'switch_up_off')
+            : (this.isAbleToForward ? 'switch_down_on' : 'switch_down_off'))
     }
 
-    isUpper(): boolean {
-        return this.useUpper;
+    setUpper(value: boolean) {
+        this.useUpper = value;
     }
 }
