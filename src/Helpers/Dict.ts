@@ -76,3 +76,14 @@ export class Vector2Dict<V> extends Dict<Vec2, V> {
         super(v => "" + v.x + "," + v.y, entries);
     }
 }
+
+export class Vector2PairDict<V> extends Dict<[Vec2, Vec2], V> {
+    constructor(entries?: Iterable<[[Vec2, Vec2], V]>) {
+        super(([v, w]) => {
+            let [min, max] = (v.x == w.x)
+                ? (v.y < w.y ? [v, w] : [w, v])
+                : (v.x < w.x ? [v, w] : [w, v])
+            return "" + min.x + "," + min.y + "," + max.x + "," + max.y
+        }, entries);
+    }
+}

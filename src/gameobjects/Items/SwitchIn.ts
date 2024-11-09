@@ -8,7 +8,7 @@ export class SwitchIn extends Item {
 
     // TODO: This needs reference to connectors!
     constructor(scene: Phaser.Scene, upper: boolean) {
-        super(scene, 'stopper_on');
+        super(scene, 'switch_up_off');
         this.setUseUpper(upper)
         scene.add.existing(this)
     }
@@ -29,7 +29,7 @@ export class SwitchIn extends Item {
     }
 
     getColWidth(): number {
-        return 2
+        return 1
     }
 
     getRowHeight(): number {
@@ -42,7 +42,7 @@ export class SwitchIn extends Item {
 
     powerForwardCanBeChecked(incomingConnections: Connection[]): boolean {
         if (this.useUpper) {
-            return
+            return false
         }
         return true
     }
@@ -69,9 +69,9 @@ export class SwitchIn extends Item {
 
     setUseUpper(value: boolean) {
         this.useUpper = value;
-        // this.sprite.setTexture(this._isOn
-        //     ? 'switch_on'
-        //     : 'switch_off');
+        this.sprite!.setTexture(this.useUpper
+            ? 'switch_up_off'
+            : 'switch_down_off');
     }
 
     isUsingUpper(): boolean {

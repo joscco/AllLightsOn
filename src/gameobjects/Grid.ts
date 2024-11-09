@@ -2,7 +2,7 @@ import Graphics = Phaser.GameObjects.Graphics;
 import Layer = Phaser.GameObjects.Layer;
 import Clamp = Phaser.Math.Clamp;
 import {Scene} from "phaser"
-import {Vector2Dict,} from "../Helpers/Dict"
+import {Vector2Dict, Vector2PairDict,} from "../Helpers/Dict"
 import {Item, GameColors} from "../interfaces/Item"
 import {Vec2, vec2Add, vec2Equals, vec2Mean} from "../Helpers/VecMath"
 import {Connection} from "./Connection"
@@ -60,6 +60,7 @@ export class Grid implements AStarGrid {
 
     // Depth 2
     private connections: Connection[] = []
+    private connectionNodePairs: Vector2PairDict<Connection> = new Vector2PairDict<Connection>()
     private connectionLayer: Layer
 
     constructor(scene: Scene, centerX: number, centerY: number, columns: number, rows: number) {
@@ -98,18 +99,21 @@ export class Grid implements AStarGrid {
         this.itemLayer.setDepth(3)
     }
 
-    isFreeAt(v: Vec2): boolean {
-        return !this.itemMap.has(v) && !this.inConnectorMap.has(v) && !this.outConnectorMap.has(v)
+    isFreeAt(v: Vec2, comingFrom: Vec2): boolean {
+        return !this.itemMap.has(v)
+            && !this.inConnectorMap.has(v)
+            && !this.outConnectorMap.has(v)
+            && !this.connectionNodePairs.has([v, comingFrom])
     }
 
-    getNeighbors(v: Vec2, exceptions: Vec2[] = []): Vec2[] {
+    getNeighbors(v: Vec2, exceptionIndices: Vec2[] = []): Vec2[] {
         return [{x: v.x - 1, y: v.y},
             {x: v.x + 1, y: v.y},
             {x: v.x, y: v.y - 1},
             {x: v.x, y: v.y + 1}]
             .filter(index => index.x >= this.minColIndex && index.x <= this.maxColIndex
                 && index.y >= this.minRowIndex && index.y <= this.maxRowIndex)
-            .filter(index => this.isFreeAt(index) || exceptions.some(item => vec2Equals(item, index)))
+            .filter(index => this.isFreeAt(index, v) || exceptionIndices.some(item => vec2Equals(item, index) && this.getConnectorAtIndex(index)))
     };
 
     addConnectionToLayer(connection: Connection) {
@@ -134,6 +138,11 @@ export class Grid implements AStarGrid {
             used: true,
             isInput: true
         })
+
+        let indexPath = connection.getIndexPath()
+        for (let i = 0; i < indexPath.length - 2; i++) {
+            this.connectionNodePairs.set([indexPath[i], indexPath[i+1]], connection)
+        }
     }
 
     calculatePosPathFromIndices(indexPath: Vec2[]): Vec2[] {

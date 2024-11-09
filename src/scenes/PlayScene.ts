@@ -65,7 +65,7 @@ export default class PlayScene extends Phaser.Scene {
         this.grid.addItemAtIndex({x: -5, y: -2}, new Power(this))
         this.grid.addItemAtIndex({x: -5, y: -1}, new Power(this))
         this.grid.addItemAtIndex({x: -2, y: -2}, new Stopper(this, false))
-        this.grid.addItemAtIndex({x: -2, y:-1}, new Stopper(this, false))
+        this.grid.addItemAtIndex({x: -2, y: -1}, new Stopper(this, false))
         this.grid.addItemAtIndex({x: 2, y: -2}, new Or(this))
         this.grid.addItemAtIndex({x: 6, y: -2}, new Light(this))
 
@@ -73,13 +73,13 @@ export default class PlayScene extends Phaser.Scene {
         this.grid.addItemAtIndex({x: -5, y: 2}, new Power(this))
         this.grid.addItemAtIndex({x: -5, y: 3}, new Power(this))
         this.grid.addItemAtIndex({x: -2, y: 2}, new Stopper(this, false))
-        this.grid.addItemAtIndex({x: -2, y:3}, new Stopper(this, false))
+        this.grid.addItemAtIndex({x: -2, y: 3}, new Stopper(this, false))
         this.grid.addItemAtIndex({x: 2, y: 2}, new And(this))
         this.grid.addItemAtIndex({x: 6, y: 2}, new Light(this))
 
-        // this.grid.addItemAtIndex({x: -8, y: -3}, new Splitter(this))
-        // this.grid.addItemAtIndex({x: -1, y: -3}, new SwitchIn(this, false))
-        // this.grid.addItemAtIndex({x: 3, y: -3}, new SwitchOut(this, false))
+        this.grid.addItemAtIndex({x: -1, y: 5}, new SwitchIn(this, false))
+        this.grid.addItemAtIndex({x: 3, y: 5}, new SwitchOut(this, false))
+        this.grid.addItemAtIndex({x: 6, y: 5}, new Splitter(this))
     }
 
     update(time: number) {
@@ -199,7 +199,10 @@ export default class PlayScene extends Phaser.Scene {
     private addPointToPath(indexForPointer: Vec2, switcherPath: Vec2[]): Vec2[] {
         let lastIndex = switcherPath.at(-1)
         let newIndices: Vec2[] = []
-        if (!lastIndex || Math.abs(indexForPointer.x - lastIndex.x) + Math.abs(indexForPointer.y - lastIndex.y) == 1) {
+        if (!lastIndex
+            || (this.grid?.isFreeAt(indexForPointer, lastIndex)
+                && Math.abs(indexForPointer.x - lastIndex.x) + Math.abs(indexForPointer.y - lastIndex.y) == 1)
+        ) {
             newIndices.push(indexForPointer)
         } else {
             // Add trivial connection path

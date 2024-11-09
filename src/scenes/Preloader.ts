@@ -26,14 +26,20 @@ export default class Preloader extends Phaser.Scene {
         this.load.image('base_orange_1_1', 'assets/images/Orange_1_1.png');
         this.load.image('base_orange_2_1', 'assets/images/Orange_2_1.png');
         this.load.image('base_orange_1_2', 'assets/images/Orange_1_2.png');
-        this.load.image('base_orange_2_2', 'assets/images/Orange.png_2_2');
+        this.load.image('base_orange_2_2', 'assets/images/Orange_2_2.png');
 
         this.load.image('light_off', 'assets/images/light_off.png');
         this.load.image('light_on', 'assets/images/light_on.png');
         this.load.image('light_overlay', 'assets/images/light_overlay.png');
         this.load.image('power_on', 'assets/images/power_on.png');
-        this.load.image('stopper_off', 'assets/images/stopper_off.png');
-        this.load.image('stopper_on', 'assets/images/stopper_on.png');
+
+        this.load.image('stopper_off', 'assets/images/stopper_left_off.png');
+        this.load.image('stopper_on', 'assets/images/stopper_right_on.png');
+        this.load.image('switch_up_off', 'assets/images/switch_up_off.png');
+        this.load.image('switch_up_on', 'assets/images/switch_up_on.png');
+        this.load.image('switch_down_off', 'assets/images/switch_down_off.png');
+        this.load.image('switch_down_on', 'assets/images/switch_down_on.png');
+
         this.load.image('connector_plus', 'assets/images/ConnectorPlus.png');
         this.load.image('connector_minus', 'assets/images/ConnectorMinus.png');
     }

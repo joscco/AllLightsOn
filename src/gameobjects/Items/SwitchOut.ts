@@ -4,12 +4,12 @@ import {Connection} from "../Connection";
 
 // Allows switching between multiple outputs
 export class SwitchOut extends Item {
-    private _isOn: boolean = false;
+    private useUpper: boolean = false;
 
     // TODO: This needs reference to connectors!
-    constructor(scene: Phaser.Scene, on: boolean) {
-        super(scene, 'stopper_on');
-        this.setOn(on)
+    constructor(scene: Phaser.Scene, upper: boolean) {
+        super(scene, 'switch_up_off');
+        this.setUpper(upper)
         scene.add.existing(this)
     }
 
@@ -29,7 +29,7 @@ export class SwitchOut extends Item {
     }
 
     getColWidth(): number {
-        return 2
+        return 1
     }
 
     getRowHeight(): number {
@@ -37,7 +37,7 @@ export class SwitchOut extends Item {
     }
 
     powerAvailableAfter(): boolean {
-        return this.isOn()
+        return this.isUpper()
     }
 
     powerForwardCanBeChecked(numberOfLeftConnections: Connection[]): boolean {
@@ -54,7 +54,7 @@ export class SwitchOut extends Item {
     }
 
     onClick() {
-        this.setOn(!this.isOn())
+        this.setUpper(!this.isUpper())
     }
 
     isPowerSource(): boolean {
@@ -65,14 +65,14 @@ export class SwitchOut extends Item {
         return
     }
 
-    setOn(value: boolean) {
-        this._isOn = value;
-        // this.sprite.setTexture(this._isOn
-        //     ? 'switch_on'
-        //     : 'switch_off');
+    setUpper(value: boolean) {
+        this.useUpper = value;
+        this.sprite!.setTexture(this.useUpper
+            ? 'switch_up_off'
+            : 'switch_down_off');
     }
 
-    isOn(): boolean {
-        return this._isOn;
+    isUpper(): boolean {
+        return this.useUpper;
     }
 }

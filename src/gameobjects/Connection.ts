@@ -237,4 +237,8 @@ export class Connection extends Graphics {
     getStartIsSource() {
         return this.startIsSource
     }
+
+    getIndexPath() {
+        return this.indexPath
+    }
 }
