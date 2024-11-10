@@ -141,8 +141,36 @@ export class Grid implements AStarGrid {
 
         let indexPath = connection.getIndexPath()
         for (let i = 0; i < indexPath.length - 2; i++) {
-            this.connectionNodePairs.set([indexPath[i], indexPath[i+1]], connection)
+            this.connectionNodePairs.set([indexPath[i], indexPath[i + 1]], connection)
         }
+    }
+
+    removeConnection(connection: Connection) {
+        let connectionIndex = this.connections.indexOf(connection, 0);
+        if (connectionIndex > -1) {
+            this.connections.splice(connectionIndex, 1);
+        }
+
+        let outConnectorEntry = this.outConnectorMap.get(connection.getSourceIndex()!)!
+        this.outConnectorMap.set(connection.getSourceIndex()!, {
+            item: outConnectorEntry.item,
+            used: false,
+            isInput: false
+        })
+
+        let inConnectorEntry = this.inConnectorMap.get(connection.getConsumerIndex()!)!
+        this.inConnectorMap.set(connection.getConsumerIndex()!, {
+            item: inConnectorEntry.item,
+            used: false,
+            isInput: true
+        })
+
+        let indexPath = connection.getIndexPath()
+        for (let i = 0; i < indexPath.length - 2; i++) {
+            this.connectionNodePairs.deleteAllWithValue(connection)
+        }
+
+        connection.kill(true)
     }
 
     calculatePosPathFromIndices(indexPath: Vec2[]): Vec2[] {
@@ -271,6 +299,11 @@ export class Grid implements AStarGrid {
         return this.connections.filter(connection =>
             connection.getConsumer()! == item
             || connection.getSource()! == item)
+    }
+
+    getConnectionForConnectorIndex(connectorIndex: Vec2) {
+        return this.connections.find(connection => vec2Equals(connection.getSourceIndex()!, connectorIndex)
+            || vec2Equals(connection.getConsumerIndex()!, connectorIndex))
     }
 
     hasConnection(connection: Connection) {

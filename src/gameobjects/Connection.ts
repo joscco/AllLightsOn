@@ -165,17 +165,22 @@ export class Connection extends Graphics {
 
     update(now: number) {
 
-        if (this.showingElectrons && now > this.lastElectronChange + this.electronMsPerNode)
-        {
+        if (this.showingElectrons && now > this.lastElectronChange + this.electronMsPerNode) {
             this.lastElectronChange = now
-            this.electronGraphics.clear()
 
-            if (this.lastElectronIndex == this.posPath.length - 1 && now < this.lastRoundStart + this.minWaitingTimeForNextElectron) {
+            this.electronGraphics.clear()
+            let isAtEnd = this.startIsSource
+                ? (this.lastElectronIndex == this.posPath.length - 1)
+                : (this.lastElectronIndex == 0)
+            if (isAtEnd && now < this.lastRoundStart + this.minWaitingTimeForNextElectron) {
                 // Last position was reached and new electron cannot be fired. Wait
                 return
             }
 
-            if (this.lastElectronIndex == 0) {
+            let isAtStart = this.startIsSource
+                ? (this.lastElectronIndex == 0)
+                : (this.lastElectronIndex == this.posPath.length - 1)
+            if (isAtStart) {
                 this.lastRoundStart = now
             }
 
@@ -240,5 +245,33 @@ export class Connection extends Graphics {
 
     getIndexPath() {
         return this.indexPath
+    }
+
+    kill(immediate: boolean = false) {
+        this.electronGraphics.destroy()
+        if (immediate) {
+            this.destroy()
+        } else {
+            let fullPositionPath = this.posPath
+            let interval = setInterval(() => {
+                if (fullPositionPath.length == 0) {
+                    clearInterval(interval)
+                    this.destroy()
+                } else {
+                    this.reducePath()
+                    this.draw()
+                }
+            }, 150 / this.posPath.length)
+
+        }
+
+    }
+
+    private reducePath() {
+        if (this.startIsSource) {
+            this.posPath = this.posPath.slice(1, this.posPath.length)
+        } else {
+            this.posPath = this.posPath.slice(0, this.posPath.length - 1)
+        }
     }
 }

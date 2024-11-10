@@ -24,6 +24,8 @@ export default class PlayScene extends Phaser.Scene {
     private pressed: boolean = false
     private connection: Connection | undefined
     private indexPath: Vec2[] = [];
+    private lastIndexForHover?: Vec2;
+    private newConnection: boolean = false;
 
     constructor() {
         super({key: 'PlayScene'})
@@ -93,41 +95,17 @@ export default class PlayScene extends Phaser.Scene {
         this.input.on('pointerupoutside', (pointer: Vector2) => this.onPointerUp(pointer))
     }
 
-    private onPointerUp(pointer: Vector2) {
-        this.pressed = false
-        let item = this.grid?.getItemAtIndex(this.grid?.getIndexForPosition(pointer))
-        if (item && (!this.connection || item == this.connection?.getStart())) {
-            item.onClick()
-            this.checkSources()
-            this.connection?.destroy()
-            this.connection = undefined
-        } else if (this.connection) {
-            if (this.connection.getStart() && this.connection.getEnd() && !this.grid!.hasConnection(this.connection)) {
-                this.grid!.addConnection(this.connection)
-                this.checkSources()
-                this.connection = undefined
-            } else {
-                this.connection.getStart()?.wiggle()
-                this.connection.getEnd()?.wiggle()
-                this.connection?.destroy()
-                this.connection = undefined
-            }
-        }
-
-    }
-
     private onPointerDown(pointer: Phaser.Math.Vector2) {
         this.pressed = true
         let index = this.grid!.getIndexForPosition(pointer)
         let item = this.grid!.getItemAtIndex(index) ?? this.grid!.getConnectorAtIndex(index)?.item
         if (item) {
-            let currentConnectionsForItem = this.grid!.getConnectionsFor(item)
-            if (currentConnectionsForItem.length < item.getNumberOfInputs() + item.getNumberOfOutputs()) {
-                this.connection = new Connection(this)
-                this.grid!.addConnectionToLayer(this.connection)
-                this.connection.setStart(item)
-                this.indexPath = [this.grid!.getIndexForPosition(pointer)]
-            }
+            this.connection = new Connection(this)
+            this.grid!.addConnectionToLayer(this.connection)
+            this.connection.setStart(item)
+            this.indexPath = [this.grid!.getIndexForPosition(pointer)]
+            this.newConnection = true
+            this.onPointerMove(pointer)
         }
     }
 
@@ -137,6 +115,38 @@ export default class PlayScene extends Phaser.Scene {
         }
 
         let indexForPointer = this.grid!.getIndexForPosition(pointer)
+        if (!this.newConnection && indexForPointer
+            && this.lastIndexForHover
+            && vec2Equals(this.lastIndexForHover, indexForPointer)) {
+            return;
+        }
+
+        this.newConnection = false
+        this.lastIndexForHover = indexForPointer
+
+        // Check for existing connection
+        let existingConnection = this.grid?.getConnectionForConnectorIndex(indexForPointer)
+        if (existingConnection) {
+            let hoveredItem = this.grid!.getConnectorAtIndex(indexForPointer)?.item!
+            if ([existingConnection.getStart(), existingConnection.getEnd()].some(item => this.connection!.getStart()! == item)) {
+                let otherItem = [existingConnection.getStart(), existingConnection.getEnd()]
+                    .find(item => item != hoveredItem)!
+                if (hoveredItem == existingConnection.getStart()) {
+                    this.indexPath = existingConnection.getIndexPath().reverse()
+                } else {
+                    this.indexPath = existingConnection.getIndexPath()
+                }
+                this.connection.setStart(otherItem)
+                this.connection.setEnd(hoveredItem)
+                this.grid!.removeConnection(existingConnection)
+                this.checkSources()
+
+                let posPath = this.grid!.calculatePosPathFromIndices(this.indexPath)
+                this.connection.setPath(posPath, this.indexPath)
+                this.connection.draw();
+                return
+            }
+        }
 
         // Calculate path with only duplicate checking
         this.indexPath = this.addPointToPath(indexForPointer, this.indexPath);
@@ -144,7 +154,7 @@ export default class PlayScene extends Phaser.Scene {
         // Adapt Start And End
         let startIndex = this.indexPath.slice().reverse().findIndex(index => {
             let connector = this.grid!.getConnectorAtIndex(index);
-            return connector && !connector.used && connector.item == this.connection!.getStart()
+            return connector && connector.item == this.connection!.getStart()
         })
 
         if (startIndex > -1) {
@@ -196,6 +206,29 @@ export default class PlayScene extends Phaser.Scene {
         let posPath = this.grid!.calculatePosPathFromIndices(this.indexPath)
         this.connection.setPath(posPath, this.indexPath)
         this.connection.draw();
+    }
+
+    private onPointerUp(pointer: Vector2) {
+        this.pressed = false
+        let item = this.grid?.getItemAtIndex(this.grid?.getIndexForPosition(pointer))
+        if (item && (!this.connection || item == this.connection?.getStart())) {
+            item.onClick()
+            this.checkSources()
+            this.connection?.kill()
+            this.connection = undefined
+        } else if (this.connection) {
+            if (this.connection.getStart() && this.connection.getEnd() && !this.grid!.hasConnection(this.connection)) {
+                this.grid!.addConnection(this.connection)
+                this.checkSources()
+                this.connection = undefined
+            } else {
+                this.connection.getStart()?.wiggle()
+                this.connection.getEnd()?.wiggle()
+                this.connection?.kill()
+                this.connection = undefined
+            }
+        }
+
     }
 
     private addPointToPath(indexForPointer: Vec2, switcherPath: Vec2[]): Vec2[] {
