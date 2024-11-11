@@ -6,9 +6,10 @@ import {Connection, PowerInfo} from "../Connection";
 export class Stopper extends Item {
 
     private _isOn: boolean = false;
-    constructor(scene: Phaser.Scene, on: boolean) {
-        super(scene, 'stopper_on');
-        this.sprite?.setPosition(0, -8)
+
+    constructor(scene: Phaser.Scene, on: boolean, gridUnitSize: number) {
+        super(scene, 'stopper_on', gridUnitSize);
+        this.sprite?.setPosition(0, -33)
         this.setOn(on)
         scene.add.existing(this)
     }
@@ -16,6 +17,7 @@ export class Stopper extends Item {
     getNumberOfInputs(): number {
         return 1
     }
+
     getNumberOfOutputs(): number {
         return 1
     }
@@ -43,8 +45,8 @@ export class Stopper extends Item {
     powerForwardCanBeChecked(incomingConnections: Connection[]): boolean {
         return incomingConnections.length > 0
             && (
-            incomingConnections.some(connection => connection.isDirectedWithPower()) ||
-            incomingConnections.every(connection => connection.getPowerInfo() != PowerInfo.NO_INFO))
+                incomingConnections.some(connection => connection.isDirectedWithPower()) ||
+                incomingConnections.every(connection => connection.getPowerInfo() != PowerInfo.NO_INFO))
     }
 
     isLightBulb(): boolean {

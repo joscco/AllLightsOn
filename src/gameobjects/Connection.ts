@@ -1,17 +1,6 @@
 import Phaser from "phaser";
 import {GameColors, Item} from "../interfaces/Item";
 import {mod, Vec2, vec2Equals, vec2Mean} from "../Helpers/VecMath";
-import {
-    CONNECTOR_INSIDE_POINT_SIZE,
-    ELECTRON_COLOR,
-    ELECTRON_SIZE,
-    IN_CONNECTOR_INNER_UNUSED_COLOR,
-    IN_CONNECTOR_INNER_USED_COLOR,
-    OUT_CONNECTOR_INNER_UNUSED_COLOR,
-    OUT_CONNECTOR_INNER_USED_COLOR,
-    UNUSED_CONNECTION_COLOR,
-    USED_CONNECTION_COLOR
-} from "./Grid";
 import Graphics = Phaser.GameObjects.Graphics;
 import QuadraticBezier = Phaser.Curves.QuadraticBezier;
 import Line = Phaser.Curves.Line;
@@ -23,6 +12,18 @@ export enum PowerInfo {
     POWER_OFF,
     POWER_ON
 }
+
+export const IN_CONNECTOR_INNER_USED_COLOR = GameColors.DARK_BLUE
+export const IN_CONNECTOR_INNER_UNUSED_COLOR = GameColors.DARK_BLUE
+export const OUT_CONNECTOR_INNER_USED_COLOR = GameColors.DARK_BLUE
+export const OUT_CONNECTOR_INNER_UNUSED_COLOR = GameColors.DARK_BLUE
+export const UNUSED_CONNECTION_COLOR = GameColors.ORANGE
+export const USED_CONNECTION_COLOR = GameColors.LIGHT_ORANGE
+export const ELECTRON_COLOR = GameColors.LIGHT
+
+export const CONNECTOR_INSIDE_POINT_SIZE = 0.2
+export const ELECTRON_SIZE = 0.2
+export const LINE_SIZE = 0.18
 
 export class Connection extends Graphics {
     private indexPath: Vec2[] = []
@@ -45,8 +46,11 @@ export class Connection extends Graphics {
     private minWaitingTimeForNextElectron = 500;
     private lastElectronChange: number
     private lastRoundStart: number;
+    private lineSize: number
+    private electronSize: number
+    private connectorPointSize: number
 
-    constructor(scene: Phaser.Scene) {
+    constructor(scene: Phaser.Scene, gridUnitSize: number) {
         super(scene)
         scene.add.existing(this)
         this.lastElectronChange = scene.time.now
@@ -57,6 +61,9 @@ export class Connection extends Graphics {
             }
         })
         this.electronGraphics.setDepth(2)
+        this.lineSize = gridUnitSize * LINE_SIZE
+        this.electronSize = gridUnitSize * ELECTRON_SIZE
+        this.connectorPointSize = gridUnitSize * CONNECTOR_INSIDE_POINT_SIZE
     }
 
     getStart(): Item | undefined {
@@ -102,9 +109,9 @@ export class Connection extends Graphics {
         this.clear()
         // Setting color
         if (this.getPowerInfo() == PowerInfo.POWER_ON) {
-            this.lineStyle(7, USED_CONNECTION_COLOR)
+            this.lineStyle(this.lineSize, USED_CONNECTION_COLOR)
         } else {
-            this.lineStyle(7, UNUSED_CONNECTION_COLOR)
+            this.lineStyle(this.lineSize, UNUSED_CONNECTION_COLOR)
         }
         // Redrawing path
         let path = new Path();
@@ -132,10 +139,10 @@ export class Connection extends Graphics {
                 let start = this.posPath[0]
                 let end = this.posPath.at(-1)!
                 this.fillStyle(OUT_CONNECTOR_INNER_UNUSED_COLOR)
-                this.fillCircle(start.x, start.y, CONNECTOR_INSIDE_POINT_SIZE)
+                this.fillCircle(start.x, start.y, this.connectorPointSize)
                 if (!vec2Equals(start, end)) {
                     this.fillStyle(GameColors.ORANGE)
-                    this.fillCircle(end.x, end.y, CONNECTOR_INSIDE_POINT_SIZE)
+                    this.fillCircle(end.x, end.y, this.connectorPointSize)
                 }
                 return
             }
@@ -148,17 +155,17 @@ export class Connection extends Graphics {
                 // Start in red and end in green
                 this.showingElectrons = true
                 this.fillStyle(OUT_CONNECTOR_INNER_USED_COLOR)
-                this.fillCircle(sourcePosition.x, sourcePosition.y, CONNECTOR_INSIDE_POINT_SIZE)
+                this.fillCircle(sourcePosition.x, sourcePosition.y, this.connectorPointSize)
                 this.fillStyle(IN_CONNECTOR_INNER_USED_COLOR)
-                this.fillCircle(consumerPosition.x, consumerPosition.y, CONNECTOR_INSIDE_POINT_SIZE)
+                this.fillCircle(consumerPosition.x, consumerPosition.y, this.connectorPointSize)
             } else {
                 this.showingElectrons = false
                 this.electronGraphics.clear()
                 // just put normal points
                 this.fillStyle(OUT_CONNECTOR_INNER_UNUSED_COLOR)
-                this.fillCircle(sourcePosition.x, sourcePosition.y, CONNECTOR_INSIDE_POINT_SIZE)
+                this.fillCircle(sourcePosition.x, sourcePosition.y, this.connectorPointSize)
                 this.fillStyle(IN_CONNECTOR_INNER_UNUSED_COLOR)
-                this.fillCircle(consumerPosition.x, consumerPosition.y, CONNECTOR_INSIDE_POINT_SIZE)
+                this.fillCircle(consumerPosition.x, consumerPosition.y, this.connectorPointSize)
             }
         }
     }
@@ -203,7 +210,7 @@ export class Connection extends Graphics {
                 newPos = nextPosition
             }
 
-            this.electronGraphics.fillCircle(newPos.x, newPos.y, ELECTRON_SIZE)
+            this.electronGraphics.fillCircle(newPos.x, newPos.y, this.electronSize)
         }
     }
 

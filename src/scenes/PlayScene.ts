@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import {Light} from "../gameobjects/Items/Light";
 import {Power} from "../gameobjects/Items/Power";
 import {Stopper} from "../gameobjects/Items/Stopper";
-import {Grid} from "../gameobjects/Grid";
+import {Grid, GridSize} from "../gameobjects/Grid";
 import {Connection, PowerInfo} from "../gameobjects/Connection";
 import {Item} from "../interfaces/Item";
 import {Vec2, vec2Equals} from "../Helpers/VecMath";
@@ -15,7 +15,6 @@ import {SwitchIn} from "../gameobjects/Items/SwitchIn";
 import {SwitchOut} from "../gameobjects/Items/SwitchOut";
 import Vector2 = Phaser.Math.Vector2;
 import {GAME_HEIGHT, GAME_WIDTH} from "../index";
-
 
 export default class PlayScene extends Phaser.Scene {
     private grid?: Grid
@@ -39,8 +38,11 @@ export default class PlayScene extends Phaser.Scene {
         text.setOrigin(0.5, 0.5)
         this.grid = new Grid(
             this,
-            GAME_WIDTH / 2, GAME_HEIGHT / 2,
-            18, 16)
+            GAME_WIDTH / 2,
+            GAME_HEIGHT / 2 + 50,
+            GAME_WIDTH - 50,
+            GAME_HEIGHT - 200 - 100,
+            GridSize.M)
         this.grid.showGrid()
         this.pathFinder = new AStarFinder();
 
@@ -48,40 +50,41 @@ export default class PlayScene extends Phaser.Scene {
         dragContainer.setInteractive()
         this.defineItemLogic();
 
+        let unitSize = this.grid!.getUnitSize()
         // Simple
-        this.grid.addItemAtIndex({x: -5, y: -8}, new Power(this))
-        this.grid.addItemAtIndex({x: 6, y: -8}, new Light(this))
+        this.grid.addItemAtIndex({x: -5, y: -8}, new Power(this, unitSize))
+        this.grid.addItemAtIndex({x: 6, y: -8}, new Light(this, unitSize))
 
         // Stopper
-        this.grid.addItemAtIndex({x: -5, y: -6}, new Power(this))
-        this.grid.addItemAtIndex({x: -2, y: -6}, new Stopper(this, false))
-        this.grid.addItemAtIndex({x: 6, y: -6}, new Light(this))
+        this.grid.addItemAtIndex({x: -5, y: -6}, new Power(this, unitSize))
+        this.grid.addItemAtIndex({x: -2, y: -6}, new Stopper(this, false,unitSize))
+        this.grid.addItemAtIndex({x: 6, y: -6}, new Light(this,unitSize))
 
         // Not
-        this.grid.addItemAtIndex({x: -5, y: -4}, new Power(this))
-        this.grid.addItemAtIndex({x: -2, y: -4}, new Stopper(this, false))
-        this.grid.addItemAtIndex({x: 2, y: -4}, new Not(this))
-        this.grid.addItemAtIndex({x: 6, y: -4}, new Light(this))
+        this.grid.addItemAtIndex({x: -5, y: -4}, new Power(this,unitSize))
+        this.grid.addItemAtIndex({x: -2, y: -4}, new Stopper(this, false, unitSize))
+        this.grid.addItemAtIndex({x: 2, y: -4}, new Not(this,unitSize))
+        this.grid.addItemAtIndex({x: 6, y: -4}, new Light(this,unitSize))
 
         // Or
-        this.grid.addItemAtIndex({x: -5, y: -2}, new Power(this))
-        this.grid.addItemAtIndex({x: -5, y: -1}, new Power(this))
-        this.grid.addItemAtIndex({x: -2, y: -2}, new Stopper(this, false))
-        this.grid.addItemAtIndex({x: -2, y: -1}, new Stopper(this, false))
-        this.grid.addItemAtIndex({x: 2, y: -2}, new Or(this))
-        this.grid.addItemAtIndex({x: 6, y: -2}, new Light(this))
+        this.grid.addItemAtIndex({x: -5, y: -2}, new Power(this,unitSize))
+        this.grid.addItemAtIndex({x: -5, y: -1}, new Power(this,unitSize))
+        this.grid.addItemAtIndex({x: -2, y: -2}, new Stopper(this, false,unitSize))
+        this.grid.addItemAtIndex({x: -2, y: -1}, new Stopper(this, false,unitSize))
+        this.grid.addItemAtIndex({x: 2, y: -2}, new Or(this,unitSize))
+        this.grid.addItemAtIndex({x: 6, y: -2}, new Light(this,unitSize))
 
         // And
-        this.grid.addItemAtIndex({x: -5, y: 2}, new Power(this))
-        this.grid.addItemAtIndex({x: -5, y: 3}, new Power(this))
-        this.grid.addItemAtIndex({x: -2, y: 2}, new Stopper(this, false))
-        this.grid.addItemAtIndex({x: -2, y: 3}, new Stopper(this, false))
-        this.grid.addItemAtIndex({x: 2, y: 2}, new And(this))
-        this.grid.addItemAtIndex({x: 6, y: 2}, new Light(this))
+        this.grid.addItemAtIndex({x: -5, y: 2}, new Power(this,unitSize))
+        this.grid.addItemAtIndex({x: -5, y: 3}, new Power(this,unitSize))
+        this.grid.addItemAtIndex({x: -2, y: 2}, new Stopper(this, false,unitSize))
+        this.grid.addItemAtIndex({x: -2, y: 3}, new Stopper(this, false,unitSize))
+        this.grid.addItemAtIndex({x: 2, y: 2}, new And(this,unitSize))
+        this.grid.addItemAtIndex({x: 6, y: 2}, new Light(this,unitSize))
 
-        this.grid.addItemAtIndex({x: -1, y: 5}, new SwitchIn(this, false))
-        this.grid.addItemAtIndex({x: 3, y: 5}, new SwitchOut(this, false))
-        this.grid.addItemAtIndex({x: 6, y: 5}, new Splitter(this))
+        this.grid.addItemAtIndex({x: -1, y: 5}, new SwitchIn(this, false, unitSize))
+        this.grid.addItemAtIndex({x: 3, y: 5}, new SwitchOut(this, false, unitSize))
+        this.grid.addItemAtIndex({x: 6, y: 5}, new Splitter(this, unitSize))
     }
 
     update(time: number) {
@@ -100,7 +103,7 @@ export default class PlayScene extends Phaser.Scene {
         let index = this.grid!.getIndexForPosition(pointer)
         let item = this.grid!.getItemAtIndex(index) ?? this.grid!.getConnectorAtIndex(index)?.item
         if (item) {
-            this.connection = new Connection(this)
+            this.connection = new Connection(this, this.grid!.getUnitSize())
             this.grid!.addConnectionToLayer(this.connection)
             this.connection.setStart(item)
             this.indexPath = [this.grid!.getIndexForPosition(pointer)]

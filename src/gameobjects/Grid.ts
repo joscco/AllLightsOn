@@ -1,13 +1,17 @@
 import Graphics = Phaser.GameObjects.Graphics;
 import Layer = Phaser.GameObjects.Layer;
 import Clamp = Phaser.Math.Clamp;
+import Container = Phaser.GameObjects.Container;
 import {Scene} from "phaser"
 import {Vector2Dict, Vector2PairDict,} from "../Helpers/Dict"
-import {Item, GameColors} from "../interfaces/Item"
+import {GameColors, Item} from "../interfaces/Item"
 import {Vec2, vec2Add, vec2Equals, vec2Mean} from "../Helpers/VecMath"
 import {Connection} from "./Connection"
 import {AStarGrid} from "../AStar/AStarFinder";
-import Container = Phaser.GameObjects.Container;
+
+export enum GridSize {
+    XS, S, M, L
+}
 
 export type ConnectorInUsed = {
     item: Item,
@@ -15,19 +19,8 @@ export type ConnectorInUsed = {
     isInput: boolean
 }
 
-export const GRID_UNIT_SIZE = 45
-export const GRID_POINT_SIZE = 4
-export const CONNECTOR_INSIDE_POINT_SIZE = 8
-export const ELECTRON_SIZE = 8
-
+export const GRID_POINT_SIZE = 0.1
 export const GRID_POINT_COLOR = GameColors.BLUE
-export const IN_CONNECTOR_INNER_USED_COLOR = GameColors.DARK_BLUE
-export const IN_CONNECTOR_INNER_UNUSED_COLOR = GameColors.DARK_BLUE
-export const OUT_CONNECTOR_INNER_USED_COLOR = GameColors.DARK_BLUE
-export const OUT_CONNECTOR_INNER_UNUSED_COLOR = GameColors.DARK_BLUE
-export const UNUSED_CONNECTION_COLOR = GameColors.ORANGE
-export const USED_CONNECTION_COLOR = GameColors.LIGHT_ORANGE
-export const ELECTRON_COLOR = GameColors.LIGHT
 
 export class Grid implements AStarGrid {
     scene: Scene
@@ -39,6 +32,7 @@ export class Grid implements AStarGrid {
     maxRowIndex: number
     private columns: number
     private rows: number
+    private gridSize: GridSize
     private colWidth: number
     private rowWidth: number
     private evenColsOffset: number
@@ -63,18 +57,19 @@ export class Grid implements AStarGrid {
     private connectionNodePairs: Vector2PairDict<Connection> = new Vector2PairDict<Connection>()
     private connectionLayer: Layer
 
-    constructor(scene: Scene, centerX: number, centerY: number, columns: number, rows: number) {
+    constructor(scene: Scene, centerX: number, centerY: number, width: number, height: number, gridSize: GridSize) {
         this.scene = scene
         this.x = centerX
         this.y = centerY
-        this.columns = columns
-        this.rows = rows
-        this.minColIndex = -columns / 2
-        this.maxColIndex = columns / 2
-        this.minRowIndex = -rows / 2
-        this.maxRowIndex = rows / 2
-        this.colWidth = GRID_UNIT_SIZE
-        this.rowWidth = GRID_UNIT_SIZE
+        this.colWidth = Grid.getUnitSize(gridSize)
+        this.rowWidth = Grid.getUnitSize(gridSize)
+        this.columns = Math.floor(width / this.colWidth) + 1
+        this.rows = Math.floor(height / this.rowWidth) + 1
+        this.minColIndex = -Math.floor(this.columns / 2)
+        this.maxColIndex = Math.floor(this.columns / 2)
+        this.minRowIndex = -Math.floor(this.rows / 2)
+        this.maxRowIndex = Math.floor(this.rows / 2)
+        this.gridSize = gridSize
         this.evenColsOffset = (this.columns % 2 == 0) ? this.colWidth / 2 : 0
         this.evenRowsOffset = (this.rows % 2 == 0) ? this.rowWidth / 2 : 0
 
@@ -97,6 +92,27 @@ export class Grid implements AStarGrid {
         // Set up item layer
         this.itemLayer = this.scene.add.layer()
         this.itemLayer.setDepth(3)
+    }
+
+    private static getUnitSize(gridSize: GridSize) {
+        switch (gridSize) {
+            case GridSize.XS:
+                return 40
+            case GridSize.S:
+                return 60
+            case GridSize.M:
+                return 75
+            case GridSize.L:
+                return 90
+        }
+    }
+
+    public getUnitSize() {
+        return Grid.getUnitSize(this.gridSize)
+    }
+
+    private static getItemScale(gridSize: GridSize) {
+        return this.getUnitSize(gridSize) / 200
     }
 
     isFreeAt(v: Vec2, comingFrom: Vec2): boolean {
@@ -190,7 +206,6 @@ export class Grid implements AStarGrid {
     addItemAtIndex(bottomLeftIndex: Vec2, item: Item) {
         this.itemLayer.add(item)
         this.items.push(item);
-        item.setWithUnitSize(this.colWidth)
         for (let colOffset = 0; colOffset < item.getColWidth(); colOffset++) {
             for (let rowOffset = 0; rowOffset < item.getRowHeight(); rowOffset++
             ) {
@@ -209,7 +224,7 @@ export class Grid implements AStarGrid {
         item.setPosition(center.x, center.y)
         item.setIndex(bottomLeftIndex)
         item.setDepth(bottomLeftIndex.y)
-
+        item.setScale(Grid.getItemScale(this.gridSize))
 
         // Set connectors
         let leftBottomIndex = {x: bottomLeftIndex.x, y: bottomLeftIndex.y}
@@ -218,7 +233,9 @@ export class Grid implements AStarGrid {
             item.addIncomingConnectorIndex(offsetIndex)
             let offsetPosition = this.getPositionForIndex(offsetIndex)
             this.inConnectorMap.set(offsetIndex, {item: item, used: false, isInput: true})
-            this.connectorImages.add(this.scene.add.image(offsetPosition.x + 24, offsetPosition.y, 'connector_plus'))
+            let connector = this.scene.add.image(offsetPosition.x + 0.53 * this.colWidth, offsetPosition.y, 'connector_plus')
+            connector.setScale(Grid.getItemScale(this.gridSize))
+            this.connectorImages.add(connector)
         }
 
         let rightTopIndex = {x: bottomLeftIndex.x + item.getColWidth() - 1, y: bottomLeftIndex.y}
@@ -227,7 +244,9 @@ export class Grid implements AStarGrid {
             item.addOutgoingConnectorIndex(offsetIndex)
             let offsetPosition = this.getPositionForIndex(offsetIndex)
             this.outConnectorMap.set(offsetIndex, {item: item, used: false, isInput: false})
-            this.connectorImages.add(this.scene.add.image(offsetPosition.x - 24, offsetPosition.y, 'connector_minus'))
+            let connector = this.scene.add.image(offsetPosition.x - 0.53 * this.colWidth, offsetPosition.y, 'connector_minus')
+            connector.setScale(Grid.getItemScale(this.gridSize))
+            this.connectorImages.add(connector)
         }
     }
 
@@ -255,12 +274,12 @@ export class Grid implements AStarGrid {
 
     private updateGridRender() {
         this.gridPointGraphics.clear()
-        for (let x = -this.columns / 2; x <= this.columns / 2; x++) {
-            for (let y = -this.rows / 2; y <= this.rows / 2; y++) {
+        for (let x = this.minColIndex; x <= this.maxColIndex; x++) {
+            for (let y = this.minRowIndex; y <= this.maxRowIndex; y++) {
                 var index = {x: x, y: y}
                 var pos = this.getPositionForIndex(index)
                 if (!this.itemMap.has(index)) {
-                    this.gridPointGraphics.fillCircle(pos.x, pos.y, GRID_POINT_SIZE)
+                    this.gridPointGraphics.fillCircle(pos.x, pos.y, GRID_POINT_SIZE * Grid.getUnitSize(this.gridSize))
                 }
 
             }

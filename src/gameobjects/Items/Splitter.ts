@@ -5,8 +5,8 @@ import {Connection} from "../Connection";
 // Links one source to multiple outputs
 export class Splitter extends Item {
 
-    constructor(scene: Phaser.Scene) {
-        super(scene, '');
+    constructor(scene: Phaser.Scene, gridUnitSize: number) {
+        super(scene, '', gridUnitSize);
         scene.add.existing(this)
     }
 

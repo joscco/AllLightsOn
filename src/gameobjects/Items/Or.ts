@@ -7,12 +7,12 @@ import Text = Phaser.GameObjects.Text;
 export class Or extends Item {
     private text: Text
 
-    constructor(scene: Phaser.Scene) {
-        super(scene, '');
+    constructor(scene: Phaser.Scene, gridUnitSize: number) {
+        super(scene, '', gridUnitSize);
         scene.add.existing(this)
-        this.text = scene.add.text(0, -5, 'OR', {
+        this.text = scene.add.text(-6, -22, 'OR', {
             fontFamily: "Jersey",
-            fontSize: 40
+            fontSize: 178
         })
         this.text.setOrigin(0.5)
         this.text.angle = -90

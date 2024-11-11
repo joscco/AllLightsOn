@@ -3,8 +3,8 @@ import {Item, GameBaseColor, GameColors} from "../../interfaces/Item";
 
 // Produces power
 export class Power extends Item {
-    constructor(scene: Phaser.Scene) {
-        super(scene, 'power_on');
+    constructor(scene: Phaser.Scene, gridUnitSize: number) {
+        super(scene, 'power_on', gridUnitSize);
         scene.add.existing(this)
     }
 

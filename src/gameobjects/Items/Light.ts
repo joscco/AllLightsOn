@@ -9,14 +9,14 @@ export class Light extends Item {
     private onSprite: Image
     private overlay: Image
 
-    constructor(scene: Phaser.Scene) {
-        super(scene, 'light_off');
+    constructor(scene: Phaser.Scene, gridUnitSize: number) {
+        super(scene, 'light_off', gridUnitSize);
         scene.add.existing(this)
 
-        this.sprite!.setPosition(0, -15)
+        this.sprite!.setPosition(0, -67)
 
-        this.onSprite = this.scene.add.image(0, -15, 'light_on')
-        this.overlay = this.scene.add.image(0, -20, 'light_overlay')
+        this.onSprite = this.scene.add.image(0, -67, 'light_on')
+        this.overlay = this.scene.add.image(0, -110, 'light_overlay')
         this.add([this.overlay, this.onSprite])
         this.setOn(false, true)
     }

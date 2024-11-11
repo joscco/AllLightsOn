@@ -8,8 +8,8 @@ export class SwitchOut extends Item {
     private useUpper: boolean = false;
     private isAbleToForward: boolean = false
 
-    constructor(scene: Phaser.Scene, upper: boolean) {
-        super(scene, 'switch_up_off');
+    constructor(scene: Phaser.Scene, upper: boolean, gridUnitSize: number) {
+        super(scene, 'switch_up_off', gridUnitSize);
         this.setUpper(upper)
         scene.add.existing(this)
         this.setAbleToForward(false)

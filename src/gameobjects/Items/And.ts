@@ -8,12 +8,12 @@ export class And extends Item {
 
     private text: Text
 
-    constructor(scene: Phaser.Scene) {
-        super(scene, '');
+    constructor(scene: Phaser.Scene, gridUnitSize: number) {
+        super(scene, '', gridUnitSize);
         scene.add.existing(this)
-        this.text = scene.add.text(0,-5, 'AND', {
+        this.text = scene.add.text(-6, -22, 'AND', {
             fontFamily: "Jersey",
-            fontSize: 40
+            fontSize: 178
         })
         this.text.setOrigin(0.5)
         this.text.angle = -90
@@ -32,6 +32,7 @@ export class And extends Item {
     getNumberOfInputs(): number {
         return 2
     }
+
     getNumberOfOutputs(): number {
         return 1
     }
@@ -39,6 +40,7 @@ export class And extends Item {
     getColWidth(): number {
         return 1
     }
+
     getRowHeight(): number {
         return 2
     }
@@ -65,6 +67,7 @@ export class And extends Item {
     isPowerForwarder(): boolean {
         return true
     }
+
     isPowerSource(): boolean {
         return false
     }
