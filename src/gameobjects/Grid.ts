@@ -97,13 +97,13 @@ export class Grid implements AStarGrid {
     private static getUnitSize(gridSize: GridSize) {
         switch (gridSize) {
             case GridSize.XS:
-                return 40
+                return 58
             case GridSize.S:
-                return 60
+                return 78
             case GridSize.M:
-                return 75
+                return 98
             case GridSize.L:
-                return 90
+                return 110
         }
     }
 
