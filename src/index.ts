@@ -4,8 +4,8 @@ import Preloader from "./scenes/Preloader";
 import LevelChooserScene from "./scenes/LevelChooserScene";
 import GameConfig = Phaser.Types.Core.GameConfig;
 import RexUIPlugin from "phaser3-rex-plugins/templates/ui/ui-plugin.js";
-export const GAME_WIDTH = 1080;
-export const GAME_HEIGHT = 1920;
+export const GAME_WIDTH = 1920;
+export const GAME_HEIGHT = 1080;
 
 export const GAME_CONFIG: GameConfig = {
     type: Phaser.AUTO,
