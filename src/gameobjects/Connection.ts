@@ -257,19 +257,22 @@ export class Connection extends Graphics {
     kill(immediate: boolean = false) {
         this.electronGraphics.destroy()
         if (immediate) {
+            this.getStart()?.wiggle();
+            this.getEnd()?.wiggle();
             this.destroy()
         } else {
             let fullPositionPath = this.posPath
             let interval = setInterval(() => {
                 if (fullPositionPath.length == 0) {
                     clearInterval(interval)
+                    this.getStart()?.wiggle();
+                    this.getEnd()?.wiggle();
                     this.destroy()
                 } else {
                     this.reducePath()
                     this.draw()
                 }
             }, 150 / this.posPath.length)
-
         }
 
     }

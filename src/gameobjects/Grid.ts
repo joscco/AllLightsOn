@@ -13,7 +13,7 @@ export enum GridSize {
     XS, S, M, L
 }
 
-export type ConnectorInUsed = {
+export interface ConnectorInUsed {
     item: Item,
     used: boolean,
     isInput: boolean

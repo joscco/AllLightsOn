@@ -1,7 +1,7 @@
-import {Vec2} from "./VecMath";
+import { Vec2 } from "./VecMath";
 
 export class Dict<K, V> {
-    private map = new Map<string, [K, V]>()
+    private map = new Map<string, [K, V]>();
 
     constructor(public toIdString: (k: K) => string, entries?: Iterable<[K, V]>) {
         if (entries) {
@@ -11,79 +11,79 @@ export class Dict<K, V> {
         }
     }
 
-    set(k: K, v: V) {
+    set(k: K, v: V): this {
         this.map.set(this.toIdString(k), [k, v]);
         return this;
     }
 
     get(k: K): V | undefined {
-        return this.map.get(this.toIdString(k))?.[1]
+        return this.map.get(this.toIdString(k))?.[1];
     }
 
     has(k: K): boolean {
-        return this.map.has(this.toIdString(k))
+        return this.map.has(this.toIdString(k));
     }
 
     deleteAllWithValue(v: V): void {
         this.map.forEach(([key, val]) => {
             if (val === v) {
-                this.map.delete(this.toIdString(key))
+                this.map.delete(this.toIdString(key));
             }
-        })
+        });
     }
 
     delete(k: K): void {
-        this.map.delete(this.toIdString(k))
+        this.map.delete(this.toIdString(k));
     }
 
     [Symbol.iterator](): Iterator<[K, V]> {
         return this.map.values();
     }
 
-    getEntriesWith(lamda?: (k: K, v: V) => boolean): Array<[K, V]> {
-        let entries: [K, V][] = []
+    getEntriesWith(lambda?: (k: K, v: V) => boolean): Array<[K, V]> {
+        let entries: [K, V][] = [];
         for (let [_, [key, value]] of this.map.entries()) {
-            if (!lamda || lamda(key, value)) {
-                entries.push([key, value])
+            if (!lambda || lambda(key, value)) {
+                entries.push([key, value]);
             }
         }
-        return entries
+        return entries;
     }
 
     values(): Array<V> {
-        let entries: V[] = []
+        let entries: V[] = [];
         for (let [_id, [_key, value]] of this.map.entries()) {
-            entries.push(value)
+            entries.push(value);
         }
-        return entries
+        return entries;
     }
 
     keys(): Array<K> {
-        let entries: K[] = []
+        let entries: K[] = [];
         for (let [_id, [key, _value]] of this.map.entries()) {
-            entries.push(key)
+            entries.push(key);
         }
-        return entries
+        return entries;
     }
 
-    copy() {
-        return new Dict<K, V>((key: K) => this.toIdString(key), this)
+    copy(): Dict<K, V> {
+        return new Dict<K, V>((key: K) => this.toIdString(key), this);
     }
 }
 
 export class Vector2Dict<V> extends Dict<Vec2, V> {
     constructor(entries?: Iterable<[Vec2, V]>) {
-        super(v => "" + v.x + "," + v.y, entries);
+        super(v => `${v.x},${v.y}`, entries);
     }
 }
 
 export class Vector2PairDict<V> extends Dict<[Vec2, Vec2], V> {
     constructor(entries?: Iterable<[[Vec2, Vec2], V]>) {
         super(([v, w]) => {
-            let [min, max] = (v.x == w.x)
+            let [min, max] = (v.x === w.x)
                 ? (v.y < w.y ? [v, w] : [w, v])
-                : (v.x < w.x ? [v, w] : [w, v])
-            return "" + min.x + "," + min.y + "," + max.x + "," + max.y
+                : (v.x < w.x ? [v, w] : [w, v]);
+            return `${min.x},${min.y},${max.x},${max.y}`;
         }, entries);
     }
 }

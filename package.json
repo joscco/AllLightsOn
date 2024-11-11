@@ -6,20 +6,21 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "test": "jest"
   },
   "author": "joscco",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/geocine/phaser3-rollup-typescript/issues"
-  },
   "homepage": "https://joscco.github.io/AllLightsOn",
   "devDependencies": {
     "@rollup/plugin-alias": "^3.1.9",
     "@rollup/plugin-commonjs": "^22.0.0",
     "@rollup/plugin-replace": "^4.0.0",
+    "@types/jest": "^29.5.14",
     "@types/node": "^17.0.31",
+    "jest": "^29.7.0",
     "phaser": "^3.86.0",
+    "ts-jest": "^29.2.5",
     "typescript": "^4.6.4",
     "vite": "^5.4.10"
   },

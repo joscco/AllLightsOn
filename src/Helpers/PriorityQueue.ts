@@ -1,3 +1,5 @@
+import {IPriorityQueue} from "../interfaces/IPriorityQueue";
+
 /**
  * The priority queue is a collection in which items can be added at any time, but the only item that can be removed is the one with the highest priority.
  * A heap is a complete binary tree in which the value of a node is less than or greater than all the values in its subtrees.
@@ -27,7 +29,7 @@
  * const array = p.toArray(); // This will extract all elements from queue to array
  * // return array = [3, 1, 2];
  */
-export class PriorityQueue<T> {
+export class PriorityQueue<T> implements IPriorityQueue<T>{
     private _queue: T[];
     private _comparator?: (item1: T, item2: T) => boolean;
 

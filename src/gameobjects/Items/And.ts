@@ -12,7 +12,7 @@ export class And extends Item {
         super(scene, '', gridUnitSize);
         scene.add.existing(this)
         this.text = scene.add.text(-6, -22, 'AND', {
-            fontFamily: "Jersey",
+            fontFamily: "ItemFont",
             fontSize: 178
         })
         this.text.setOrigin(0.5)

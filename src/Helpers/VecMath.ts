@@ -1,4 +1,7 @@
-export type Vec2 = { x: number, y: number }
+export interface Vec2 {
+    x: number,
+    y: number
+}
 
 export function vec2Equals(a: Vec2, b: Vec2, allowedOffset: number = 0.0001) {
     return Math.abs(a.x - b.x) < allowedOffset && Math.abs(a.y - b.y) < allowedOffset
