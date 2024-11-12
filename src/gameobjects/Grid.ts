@@ -213,7 +213,6 @@ export class Grid implements AStarGrid {
                 this.itemMap.set(offsetIndex, item)
             }
         }
-        this.updateGridRender()
 
         // Position item
         let centerIndex = {

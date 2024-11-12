@@ -42,11 +42,17 @@ export default class Preloader extends Phaser.Scene {
 
         this.load.image('connector_plus', 'assets/images/ConnectorPlus.png');
         this.load.image('connector_minus', 'assets/images/ConnectorMinus.png');
+
+        this.load.json('level1', 'assets/levels/level1.json');
+        this.load.json('level2', 'assets/levels/level2.json');
+        this.load.json('level3', 'assets/levels/level3.json');
+        this.load.json('level4', 'assets/levels/level4.json');
+        this.load.json('level5', 'assets/levels/level5.json');
+        this.load.json('level6', 'assets/levels/level6.json');
     }
 
     create() {
         console.log("Preloading succeeded")
-        this.scene.launch("PlayScene")
-
+        this.scene.launch("TitleScene")
     }
 }

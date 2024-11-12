@@ -30,9 +30,15 @@ export default class PlayScene extends Phaser.Scene {
     private indexPath: Vec2[] = [];
     private lastIndexForHover?: Vec2;
     private newConnection: boolean = false;
+    private level?: number
+    private levelData: any
 
     constructor() {
         super({key: 'PlayScene'});
+    }
+
+    init(data: { level: number }) {
+       this.level = data.level;
     }
 
     create() {
@@ -40,8 +46,53 @@ export default class PlayScene extends Phaser.Scene {
         this.createGrid();
         this.createDragContainer();
         this.defineItemLogic();
-        this.addItemsToGrid();
         this.powerForwarder = this.powerForwarder = new PowerForwarder(this.grid!);
+        let levelName = `level${this.level}`;
+        this.levelData = this.cache.json.get(levelName);
+        this.setupLevel(this.levelData)
+    }
+
+    private setupLevel(config: any) {
+        config.items.forEach((item: any) => {
+            const { type, position } = item;
+            switch (type) {
+                case 'Power':
+                    this.grid!.addItemAtIndex(position, new Power(this, this.grid!.getUnitSize()));
+                    break;
+                case 'Light':
+                    this.grid!.addItemAtIndex(position, new Light(this, this.grid!.getUnitSize()));
+                    break;
+                case 'Stopper':
+                    this.grid!.addItemAtIndex(position, new Stopper(this, false, this.grid!.getUnitSize()));
+                    break;
+                case 'Or':
+                    this.grid!.addItemAtIndex(position, new Or(this, this.grid!.getUnitSize()));
+                    break;
+                case 'And':
+                    this.grid!.addItemAtIndex(position, new And(this, this.grid!.getUnitSize()));
+                    break;
+                case 'Not':
+                    this.grid!.addItemAtIndex(position, new Not(this, this.grid!.getUnitSize()));
+                    break;
+                case 'Splitter':
+                    this.grid!.addItemAtIndex(position, new Splitter(this, this.grid!.getUnitSize()));
+                    break;
+                case 'SwitchIn':
+                    this.grid!.addItemAtIndex(position, new SwitchIn(this, false, this.grid!.getUnitSize()));
+                    break;
+                case 'SwitchOut':
+                    this.grid!.addItemAtIndex(position, new SwitchOut(this, false, this.grid!.getUnitSize()));
+                    break;
+            }
+        });
+
+        // config.connections.forEach((connection: any) => {
+        //     const { start, end } = connection;
+        //     const conn = new Connection(this, this.grid!.getUnitSize());
+        //     conn.setStart(this.grid!.getItemAtIndex(start));
+        //     conn.setEnd(this.grid!.getItemAtIndex(end));
+        //     this.grid!.addConnection(conn);
+        // });
     }
 
     update(time: number) {
@@ -76,58 +127,6 @@ export default class PlayScene extends Phaser.Scene {
         this.input.on('pointermove', (pointer: Vector2) => this.onPointerMove(pointer));
         this.input.on('pointerup', (pointer: Vector2) => this.onPointerUp(pointer));
         this.input.on('pointerupoutside', (pointer: Vector2) => this.onPointerUp(pointer));
-    }
-
-    private addItemsToGrid() {
-        let unitSize = this.grid!.getUnitSize();
-        this.addSimpleItems(unitSize);
-        this.addStopperItems(unitSize);
-        this.addNotItems(unitSize);
-        this.addOrItems(unitSize);
-        this.addAndItems(unitSize);
-        this.addSwitchAndSplitterItems(unitSize);
-    }
-
-    private addSimpleItems(unitSize: number) {
-        this.grid!.addItemAtIndex({x: -5, y: -8}, new Power(this, unitSize));
-        this.grid!.addItemAtIndex({x: 6, y: -8}, new Light(this, unitSize));
-    }
-
-    private addStopperItems(unitSize: number) {
-        this.grid!.addItemAtIndex({x: -5, y: -6}, new Power(this, unitSize));
-        this.grid!.addItemAtIndex({x: -2, y: -6}, new Stopper(this, false, unitSize));
-        this.grid!.addItemAtIndex({x: 6, y: -6}, new Light(this, unitSize));
-    }
-
-    private addNotItems(unitSize: number) {
-        this.grid!.addItemAtIndex({x: -5, y: -4}, new Power(this, unitSize));
-        this.grid!.addItemAtIndex({x: -2, y: -4}, new Stopper(this, false, unitSize));
-        this.grid!.addItemAtIndex({x: 2, y: -4}, new Not(this, unitSize));
-        this.grid!.addItemAtIndex({x: 6, y: -4}, new Light(this, unitSize));
-    }
-
-    private addOrItems(unitSize: number) {
-        this.grid!.addItemAtIndex({x: -5, y: -2}, new Power(this, unitSize));
-        this.grid!.addItemAtIndex({x: -5, y: -1}, new Power(this, unitSize));
-        this.grid!.addItemAtIndex({x: -2, y: -2}, new Stopper(this, false, unitSize));
-        this.grid!.addItemAtIndex({x: -2, y: -1}, new Stopper(this, false, unitSize));
-        this.grid!.addItemAtIndex({x: 2, y: -2}, new Or(this, unitSize));
-        this.grid!.addItemAtIndex({x: 6, y: -2}, new Light(this, unitSize));
-    }
-
-    private addAndItems(unitSize: number) {
-        this.grid!.addItemAtIndex({x: -5, y: 2}, new Power(this, unitSize));
-        this.grid!.addItemAtIndex({x: -5, y: 3}, new Power(this, unitSize));
-        this.grid!.addItemAtIndex({x: -2, y: 2}, new Stopper(this, false, unitSize));
-        this.grid!.addItemAtIndex({x: -2, y: 3}, new Stopper(this, false, unitSize));
-        this.grid!.addItemAtIndex({x: 2, y: 2}, new And(this, unitSize));
-        this.grid!.addItemAtIndex({x: 6, y: 2}, new Light(this, unitSize));
-    }
-
-    private addSwitchAndSplitterItems(unitSize: number) {
-        this.grid!.addItemAtIndex({x: -1, y: 5}, new SwitchIn(this, false, unitSize));
-        this.grid!.addItemAtIndex({x: 3, y: 5}, new SwitchOut(this, false, unitSize));
-        this.grid!.addItemAtIndex({x: 6, y: 5}, new Splitter(this, unitSize));
     }
 
     private onPointerDown(pointer: Phaser.Math.Vector2) {
