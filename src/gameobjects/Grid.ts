@@ -8,6 +8,7 @@ import {GameColors, Item} from "../interfaces/Item"
 import {Vec2, vec2Add, vec2Equals, vec2Mean} from "../Helpers/VecMath"
 import {Connection} from "./Connection"
 import {AStarGrid} from "../AStar/AStarFinder";
+import Tween = Phaser.Tweens.Tween;
 
 export enum GridSize {
     XS, S, M, L
@@ -63,8 +64,8 @@ export class Grid implements AStarGrid {
         this.y = centerY
         this.colWidth = Grid.getUnitSize(gridSize)
         this.rowWidth = Grid.getUnitSize(gridSize)
-        this.columns = Math.floor(width / this.colWidth) + 1
-        this.rows = Math.floor(height / this.rowWidth) + 1
+        this.columns = width
+        this.rows = height
         this.minColIndex = -Math.floor(this.columns / 2)
         this.maxColIndex = Math.floor(this.columns / 2)
         this.minRowIndex = -Math.floor(this.rows / 2)
@@ -113,6 +114,15 @@ export class Grid implements AStarGrid {
 
     private static getItemScale(gridSize: GridSize) {
         return this.getUnitSize(gridSize) / 200
+    }
+
+    blendIn(): Tween {
+        return this.scene.tweens.add({
+            targets: this.gridPointGraphics,
+            alpha: 1,
+            duration: 1000,
+            ease: Phaser.Math.Easing.Quadratic.InOut
+        })
     }
 
     isFreeAt(v: Vec2, comingFrom: Vec2): boolean {

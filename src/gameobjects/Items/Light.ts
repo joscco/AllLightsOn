@@ -66,7 +66,7 @@ export class Light extends Item {
         return false
     }
 
-    private setOn(value: boolean, instant: boolean = false) {
+    setOn(value: boolean, instant: boolean = false) {
         this._isOn = value;
         let alphaValue = this._isOn ? 1 : 0
 
