@@ -1,8 +1,0 @@
-{
-  "title": "Level 1",
-  "items": [
-    {"type": "Power", "position": {"x": -2, "y": 0}},
-    {"type": "Light", "position": {"x": 2, "y": 0}}
-  ],
-  "connections": []
-}
