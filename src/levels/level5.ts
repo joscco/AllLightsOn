@@ -1,5 +1,9 @@
-{
+import {LevelConfig} from "./LevelConfig";
+
+export const LEVEL_5: LevelConfig = {
   "title": "Level 5",
+      rows: 4,
+      columns: 13,
   "items": [
     {"type": "Power", "position": {"x": -5, "y": -1}},
     {"type": "Power", "position": {"x": -5, "y": 0}},

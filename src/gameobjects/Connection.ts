@@ -8,6 +8,7 @@ import Vector2 = Phaser.Math.Vector2;
 import Path = Phaser.Curves.Path;
 import Image = Phaser.GameObjects.Image;
 import Container = Phaser.GameObjects.Container;
+import {DEPTHS} from "../Helpers/Depths";
 
 export enum PowerInfo {
     NO_INFO,
@@ -64,19 +65,19 @@ export class Connection extends Container {
         this.lastElectronChange = scene.time.now
         this.lastRoundStart = scene.time.now
         this.pathGraphics = scene.add.graphics()
-        this.pathGraphics.setDepth(2)
+        this.pathGraphics.setDepth(DEPTHS.CONNECTIONS)
         this.onGraph = scene.add.image(0, 0, "").setOrigin(0, 0)
         this.onGraph.setVisible(false)
-        this.onGraph.setDepth(2)
+        this.onGraph.setDepth(DEPTHS.CONNECTIONS)
         this.offGraph = scene.add.image(0, 0, "").setOrigin(0, 0)
         this.offGraph.setVisible(false)
-        this.offGraph.setDepth(2)
+        this.offGraph.setDepth(DEPTHS.CONNECTIONS)
         this.electronGraphics = scene.add.graphics({
             fillStyle: {
                 color: ELECTRON_COLOR
             }
         })
-        this.electronGraphics.setDepth(3)
+        this.electronGraphics.setDepth(DEPTHS.ELECTRONS)
 
         this.add([this.onGraph, this.offGraph, this.pathGraphics, this.electronGraphics])
         this.lineSize = gridUnitSize * LINE_SIZE
@@ -318,12 +319,14 @@ export class Connection extends Container {
         this.setDirectedWithPower(PowerInfo.POWER_ON)
         this.drawGraphics()
         let onKey = "connection_on_" + this.sourceIndex!.x + "_" + this.sourceIndex!.y
+        this.scene.textures.removeKey(onKey)
         this.pathGraphics.generateTexture(onKey)
         this.onGraph.setTexture(onKey)
 
         this.setDirectedWithPower(PowerInfo.POWER_OFF)
         this.drawGraphics()
         let offKey = "connection_off_" + this.sourceIndex!.x + "_" + this.sourceIndex!.y
+        this.scene.textures.removeKey(offKey)
         this.pathGraphics.generateTexture(offKey)
         this.offGraph.setTexture(offKey)
 

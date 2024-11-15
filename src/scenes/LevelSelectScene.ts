@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import {GAME_WIDTH} from "../index";
+import {LEVEL_DATA} from "../levels/LevelConfig";
+import {TextButton} from "../gameobjects/TextButton";
 
 export default class LevelSelectScene extends Phaser.Scene {
     constructor() {
@@ -7,22 +9,16 @@ export default class LevelSelectScene extends Phaser.Scene {
     }
 
     create() {
-        this.add.text(GAME_WIDTH/2, 100, 'Select Level', { fontSize: '64px', color: '#fff' }).setOrigin(0.5);
+        this.add.text(GAME_WIDTH/2, 100, 'Select Level', { fontFamily: 'ItemFont', fontSize: '64px', color: '#fff' }).setOrigin(0.5);
 
         // Example buttons for levels
-        this.createLevelButton(1, 200);
-        this.createLevelButton(2, 300);
-        this.createLevelButton(3, 400);
-        this.createLevelButton(4, 500);
-        this.createLevelButton(5, 600);
-        this.createLevelButton(6, 700);
-        // Add more buttons as needed
+        for (let i = 0; i < LEVEL_DATA.length; i++) {
+            this.createLevelButton(i + 1, 250 + i * 130);
+        }
     }
 
     createLevelButton(level: number, y: number) {
-        const button = this.add.text(GAME_WIDTH/2, y, `Level ${level}`, { fontSize: '32px', color: '#fff' }).setOrigin(0.5);
-        button.setInteractive();
-        button.on('pointerdown', () => {
+        const button = new TextButton(this, GAME_WIDTH/2, y, 250, 100, `Level ${level}`, () => {
             this.scene.start('PlayScene', {level});
         });
     }

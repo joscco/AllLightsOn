@@ -14,18 +14,14 @@ import {SwitchIn} from "../gameobjects/Items/SwitchIn";
 import {SwitchOut} from "../gameobjects/Items/SwitchOut";
 import {GAME_HEIGHT, GAME_WIDTH} from "../index";
 import {PowerForwarder} from "../gameobjects/PowerForwarder";
-import Vector2 = Phaser.Math.Vector2;
-import {LevelConfig} from "../levels/LevelConfig";
+import {LEVEL_DATA, LevelConfig} from "../levels/LevelConfig";
 import {WinScreen} from "../gameobjects/WinScreen";
-import {LEVEL_1} from "../levels/level1";
-import {LEVEL_2} from "../levels/level2";
+import Vector2 = Phaser.Math.Vector2;
 
 const TEXT_STYLE = {
     fontFamily: "ItemFont",
     fontSize: 60
 };
-
-const LEVEL_DATA = [LEVEL_1, LEVEL_2]
 
 export default class PlayScene extends Phaser.Scene {
     private grid?: Grid;
@@ -39,6 +35,8 @@ export default class PlayScene extends Phaser.Scene {
     private level?: number
     private levelData?: LevelConfig
 
+    private showingWinScreen: boolean = false
+
     constructor() {
         super({key: 'PlayScene'});
     }
@@ -46,6 +44,10 @@ export default class PlayScene extends Phaser.Scene {
     init(data: {level: number}) {
         this.level = data.level
         this.levelData = LEVEL_DATA[this.level - 1]
+        this.pressed = false
+        this.newConnection= false
+        this.showingWinScreen = false
+        this.indexPath = []
     }
 
     create() {
@@ -119,10 +121,10 @@ export default class PlayScene extends Phaser.Scene {
     }
 
     private defineItemLogic() {
-        this.input.on('pointerdown', (pointer: Vector2) => this.onPointerDown(pointer));
-        this.input.on('pointermove', (pointer: Vector2) => this.onPointerMove(pointer));
-        this.input.on('pointerup', (pointer: Vector2) => this.onPointerUp(pointer));
-        this.input.on('pointerupoutside', (pointer: Vector2) => this.onPointerUp(pointer));
+        this.input.on('pointerdown', (pointer: Vector2) => {if (!this.showingWinScreen) this.onPointerDown(pointer)});
+        this.input.on('pointermove', (pointer: Vector2) =>{if (!this.showingWinScreen) this.onPointerMove(pointer)});
+        this.input.on('pointerup', (pointer: Vector2) => {if (!this.showingWinScreen)this.onPointerUp(pointer)});
+        this.input.on('pointerupoutside', (pointer: Vector2) => {if (!this.showingWinScreen)this.onPointerUp(pointer)});
     }
 
     private onPointerDown(pointer: Phaser.Math.Vector2) {
@@ -320,6 +322,7 @@ export default class PlayScene extends Phaser.Scene {
     }
 
     private showWinScreen() {
+        this.showingWinScreen = true
         new WinScreen(this, (LEVEL_DATA.length == this.level) ? undefined : this.level! + 1)
     }
 }

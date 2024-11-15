@@ -1,7 +1,9 @@
 export const DEPTHS = {
-    BACKGROUND: 0,
-    GRID: 1,
-    CONNECTORS: 2,
-    ITEMS: 3,
+    BACKGROUND: 1,
+    GRID: 2,
+    CONNECTORS: 3,
+    CONNECTIONS: 4,
+    ELECTRONS: 5,
+    ITEMS: 6,
     WIN_SCREEN: 10
 };

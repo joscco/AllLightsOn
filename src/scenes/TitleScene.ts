@@ -8,7 +8,7 @@ export default class TitleScene extends Phaser.Scene {
     }
 
     create() {
-        this.add.text(GAME_WIDTH / 2, 300, 'My Game Title', {
+        this.add.text(GAME_WIDTH / 2, 300, 'All Lights On', {
             fontFamily: ITEM_FONT,
             fontSize: '100px',
             color: '#fff'
@@ -16,7 +16,7 @@ export default class TitleScene extends Phaser.Scene {
 
         const startButton = new TextButton(this,
             GAME_WIDTH / 2, GAME_HEIGHT/2,
-            250, 100,
+            400, 100,
             'Start Game',
             () => {
                 this.scene.start('LevelSelectScene')
@@ -26,7 +26,7 @@ export default class TitleScene extends Phaser.Scene {
 
         const optionsButton = new TextButton(this,
             GAME_WIDTH / 2, 700,
-            200, 80,
+            250, 100,
             'Options',
             () => {this.scene.start('OptionsScene');}
         );

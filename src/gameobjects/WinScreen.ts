@@ -32,7 +32,7 @@ export class WinScreen extends Phaser.GameObjects.Container {
             }).setInteractive();
             nextLevelButton.setOrigin(0.5, 0.5);
             nextLevelButton.on('pointerdown', () => {
-                scene.scene.start('PlayScene', {level: nextLevel});
+                scene.scene.restart({level: nextLevel});
             });
             this.add(nextLevelButton);
         }

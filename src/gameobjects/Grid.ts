@@ -9,6 +9,7 @@ import {Vec2, vec2Add, vec2Equals, vec2Mean} from "../Helpers/VecMath"
 import {Connection} from "./Connection"
 import {AStarGrid} from "../AStar/AStarFinder";
 import {GAME_HEIGHT, GAME_WIDTH} from "../index";
+import {DEPTHS} from "../Helpers/Depths";
 
 export enum GridSize {
     XS, S, M, L
@@ -42,17 +43,18 @@ export class Grid implements AStarGrid {
     // Depth 0
     private gridPointGraphics: Graphics
     private gridPointLayer: Layer
+    private gridImage?: Phaser.GameObjects.Image;
 
     // Depth 1
     private items: Item[] = []
     private itemLayer: Layer
-    private itemMap: Vector2Dict<Item> = new Vector2Dict()
 
+    private itemMap: Vector2Dict<Item> = new Vector2Dict()
     private inConnectorMap: Vector2Dict<ConnectorInUsed> = new Vector2Dict()
     private outConnectorMap: Vector2Dict<ConnectorInUsed> = new Vector2Dict()
     private connectorImages: Container
-    private connectorPointLayer: Layer
 
+    private connectorPointLayer: Layer
     // Depth 2
     private connections: Connection[] = []
     private connectionNodePairs: Vector2PairDict<Connection> = new Vector2PairDict<Connection>()
@@ -77,20 +79,20 @@ export class Grid implements AStarGrid {
         // Set up grid points
         this.gridPointGraphics = this.scene.add.graphics({fillStyle: {color: GRID_POINT_COLOR}})
         this.gridPointLayer = this.scene.add.layer(this.gridPointGraphics)
-        this.gridPointLayer.setDepth(0)
+        this.gridPointLayer.setDepth(DEPTHS.GRID)
 
         // Set up connectors
         this.connectorImages = this.scene.add.container()
         this.connectorPointLayer = this.scene.add.layer([this.connectorImages])
-        this.connectorPointLayer.setDepth(1)
+        this.connectorPointLayer.setDepth(DEPTHS.CONNECTORS)
 
         // Set up connections
         this.connectionLayer = this.scene.add.layer()
-        this.connectionLayer.setDepth(2)
+        this.connectionLayer.setDepth(DEPTHS.CONNECTORS)
 
         // Set up item layer
         this.itemLayer = this.scene.add.layer()
-        this.itemLayer.setDepth(3)
+        this.itemLayer.setDepth(DEPTHS.ITEMS)
     }
 
     private static getUnitSize(gridSize: GridSize) {
@@ -274,9 +276,10 @@ export class Grid implements AStarGrid {
                 }
             }
         }
+        this.scene.textures.remove("gridPointTexture");
         this.gridPointGraphics.generateTexture('gridPointTexture', GAME_WIDTH, GAME_HEIGHT);
         this.gridPointGraphics.clear()
-        this.scene.add.image(0, 0, 'gridPointTexture').setOrigin(0, 0)
+        this.gridImage = this.scene.add.image(0, 0, 'gridPointTexture').setOrigin(0, 0)
     }
 
     getItemAtIndex(index: Vec2): Item | undefined {
