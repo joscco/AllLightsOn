@@ -1,22 +1,26 @@
 import Phaser from 'phaser';
+import Text = Phaser.GameObjects.Text;
+import {GAME_HEIGHT, GAME_WIDTH, ITEM_FONT} from "../index";
 
 
 export default class Preloader extends Phaser.Scene {
+
+    private loadingText?: Text
 
     constructor() {
         super({key: 'Preloader', active: true});
     }
 
     preload() {
-        this.load.on('progress', (value: number) => {
-            console.log(value);
-        });
+        this.loadingText = this.add.text(
+            GAME_WIDTH / 2, GAME_HEIGHT / 2,
+            'Loading...\n',
+            {fontFamily: ITEM_FONT, fontSize: '32px', color: '#fff'});
+        this.loadingText.setOrigin(0.5);
+        this.loadingText.setAlign('center');
 
-        this.load.on('fileprogress', (file: any) => {
-            console.log(file.src);
-        });
-        this.load.on('complete', function () {
-            console.log('complete');
+        this.load.on('progress', (value: number) => {
+            this.updateLoadingText(value);
         });
 
         this.load.image('base_blue_1_1', 'assets/images/Blue_1_1.png');
@@ -27,6 +31,7 @@ export default class Preloader extends Phaser.Scene {
         this.load.image('base_orange_2_1', 'assets/images/Orange_2_1.png');
         this.load.image('base_orange_1_2', 'assets/images/Orange_1_2.png');
         this.load.image('base_orange_2_2', 'assets/images/Orange_2_2.png');
+        this.load.image('base_white', 'assets/images/back_white.png');
 
         this.load.image('light_off', 'assets/images/light_off.png');
         this.load.image('light_on', 'assets/images/light_on.png');
@@ -43,16 +48,24 @@ export default class Preloader extends Phaser.Scene {
         this.load.image('connector_plus', 'assets/images/ConnectorPlus.png');
         this.load.image('connector_minus', 'assets/images/ConnectorMinus.png');
 
-        this.load.json('level1', 'assets/levels/level1.json');
-        this.load.json('level2', 'assets/levels/level2.json');
-        this.load.json('level3', 'assets/levels/level3.json');
-        this.load.json('level4', 'assets/levels/level4.json');
-        this.load.json('level5', 'assets/levels/level5.json');
-        this.load.json('level6', 'assets/levels/level6.json');
+        // this.load.json('level1', 'assets/levels/level1.json');
     }
 
     create() {
-        console.log("Preloading succeeded")
-        this.scene.launch("TitleScene")
+        // Fade out text, then start the title scene
+        this.tweens.add({
+            targets: this.loadingText,
+            alpha: 0,
+            duration: 1000,
+            ease: 'Power2',
+            onComplete: () => {
+                this.scene.launch("TitleScene")
+            },
+            onCompleteScope: this
+        });
+    }
+
+    private updateLoadingText(value: number) {
+        this.loadingText?.setText(`Loading...\n ${Math.floor(value * 100)}%`);
     }
 }

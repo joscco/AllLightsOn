@@ -15,11 +15,17 @@ import {SwitchOut} from "../gameobjects/Items/SwitchOut";
 import {GAME_HEIGHT, GAME_WIDTH} from "../index";
 import {PowerForwarder} from "../gameobjects/PowerForwarder";
 import Vector2 = Phaser.Math.Vector2;
+import {LevelConfig} from "../levels/LevelConfig";
+import {WinScreen} from "../gameobjects/WinScreen";
+import {LEVEL_1} from "../levels/level1";
+import {LEVEL_2} from "../levels/level2";
 
 const TEXT_STYLE = {
     fontFamily: "ItemFont",
     fontSize: 60
 };
+
+const LEVEL_DATA = [LEVEL_1, LEVEL_2]
 
 export default class PlayScene extends Phaser.Scene {
     private grid?: Grid;
@@ -31,30 +37,29 @@ export default class PlayScene extends Phaser.Scene {
     private lastIndexForHover?: Vec2;
     private newConnection: boolean = false;
     private level?: number
-    private levelData: any
+    private levelData?: LevelConfig
 
     constructor() {
         super({key: 'PlayScene'});
     }
 
-    init(data: { level: number }) {
-       this.level = data.level;
+    init(data: {level: number}) {
+        this.level = data.level
+        this.levelData = LEVEL_DATA[this.level - 1]
     }
 
     create() {
-        this.createHeading();
-        this.createGrid();
-        this.createDragContainer();
-        this.defineItemLogic();
-        this.powerForwarder = this.powerForwarder = new PowerForwarder(this.grid!);
-        let levelName = `level${this.level}`;
-        this.levelData = this.cache.json.get(levelName);
-        this.setupLevel(this.levelData)
+        this.setupLevel(this.levelData!)
     }
 
-    private setupLevel(config: any) {
+    private setupLevel(config: LevelConfig) {
+        this.createHeading(config.title ?? "Turn on all Lights");
+        this.createGrid(config.columns, config.rows);
+        this.createDragContainer();
+        this.defineItemLogic();
+        this.powerForwarder = new PowerForwarder(this.grid!);
         config.items.forEach((item: any) => {
-            const { type, position } = item;
+            const {type, position} = item;
             switch (type) {
                 case 'Power':
                     this.grid!.addItemAtIndex(position, new Power(this, this.grid!.getUnitSize()));
@@ -85,32 +90,23 @@ export default class PlayScene extends Phaser.Scene {
                     break;
             }
         });
-
-        // config.connections.forEach((connection: any) => {
-        //     const { start, end } = connection;
-        //     const conn = new Connection(this, this.grid!.getUnitSize());
-        //     conn.setStart(this.grid!.getItemAtIndex(start));
-        //     conn.setEnd(this.grid!.getItemAtIndex(end));
-        //     this.grid!.addConnection(conn);
-        // });
     }
 
     update(time: number) {
         this.grid!.getConnections().forEach(con => con.update(time));
     }
 
-    private createHeading() {
-        let text = this.add.text(GAME_WIDTH / 2, 100, "> PUT ALL LIGHTS ON.", TEXT_STYLE);
+    private createHeading(heading: string) {
+        let text = this.add.text(GAME_WIDTH / 2, 100, heading, TEXT_STYLE);
         text.setOrigin(0.5, 0.5);
     }
 
-    private createGrid() {
+    private createGrid(columns: number, rows: number) {
         this.grid = new Grid(
             this,
             GAME_WIDTH / 2,
             GAME_HEIGHT / 2 + 50,
-            10,
-            10,
+            columns, rows,
             GridSize.L
         );
         this.grid.showGrid();
@@ -319,7 +315,11 @@ export default class PlayScene extends Phaser.Scene {
         }
 
         if (this.grid!.getItems().filter(item => item.isLightBulb()).every(bulb => (bulb as Light).isOn())) {
-            console.log("WON!");
+            this.showWinScreen();
         }
+    }
+
+    private showWinScreen() {
+        new WinScreen(this, (LEVEL_DATA.length == this.level) ? undefined : this.level! + 1)
     }
 }

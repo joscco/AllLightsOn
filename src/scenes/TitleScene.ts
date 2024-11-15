@@ -1,24 +1,34 @@
 import Phaser from 'phaser';
-import {GAME_WIDTH} from "../index";
+import {GAME_HEIGHT, GAME_WIDTH, ITEM_FONT} from "../index";
+import {TextButton} from "../gameobjects/TextButton";
 
 export default class TitleScene extends Phaser.Scene {
     constructor() {
-        super({ key: 'TitleScene' });
+        super({key: 'TitleScene'});
     }
 
     create() {
-        this.add.text(GAME_WIDTH/2, 300, 'My Game Title', { fontSize: '64px', color: '#fff' }).setOrigin(0.5);
+        this.add.text(GAME_WIDTH / 2, 300, 'My Game Title', {
+            fontFamily: ITEM_FONT,
+            fontSize: '100px',
+            color: '#fff'
+        }).setOrigin(0.5);
 
-        const startButton = this.add.text(GAME_WIDTH/2, 400, 'Start Game', { fontSize: '32px', color: '#fff' }).setOrigin(0.5);
-        startButton.setInteractive();
-        startButton.on('pointerdown', () => {
-            this.scene.start('LevelSelectScene');
-        });
+        const startButton = new TextButton(this,
+            GAME_WIDTH / 2, GAME_HEIGHT/2,
+            250, 100,
+            'Start Game',
+            () => {
+                this.scene.start('LevelSelectScene')
+            })
 
-        const optionsButton = this.add.text(GAME_WIDTH/2, 500, 'Options', { fontSize: '32px', color: '#fff' }).setOrigin(0.5);
-        optionsButton.setInteractive();
-        optionsButton.on('pointerdown', () => {
-            this.scene.start('OptionsScene');
-        });
+        // Use a text button here too
+
+        const optionsButton = new TextButton(this,
+            GAME_WIDTH / 2, 700,
+            200, 80,
+            'Options',
+            () => {this.scene.start('OptionsScene');}
+        );
     }
 }

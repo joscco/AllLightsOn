@@ -8,6 +8,7 @@ import GameConfig = Phaser.Types.Core.GameConfig;
 import RexUIPlugin from "phaser3-rex-plugins/templates/ui/ui-plugin.js";
 export const GAME_WIDTH = 1920;
 export const GAME_HEIGHT = 1080;
+export const ITEM_FONT = 'ItemFont';
 
 export const GAME_CONFIG: GameConfig = {
     type: Phaser.AUTO,

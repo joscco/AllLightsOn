@@ -23,7 +23,7 @@ export default class LevelSelectScene extends Phaser.Scene {
         const button = this.add.text(GAME_WIDTH/2, y, `Level ${level}`, { fontSize: '32px', color: '#fff' }).setOrigin(0.5);
         button.setInteractive();
         button.on('pointerdown', () => {
-            this.scene.start('PlayScene', { level });
+            this.scene.start('PlayScene', {level});
         });
     }
 }
