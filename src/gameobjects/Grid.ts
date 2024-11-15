@@ -8,7 +8,7 @@ import {GameColors, Item} from "../interfaces/Item"
 import {Vec2, vec2Add, vec2Equals, vec2Mean} from "../Helpers/VecMath"
 import {Connection} from "./Connection"
 import {AStarGrid} from "../AStar/AStarFinder";
-import Tween = Phaser.Tweens.Tween;
+import {GAME_HEIGHT, GAME_WIDTH} from "../index";
 
 export enum GridSize {
     XS, S, M, L
@@ -76,10 +76,8 @@ export class Grid implements AStarGrid {
 
         // Set up grid points
         this.gridPointGraphics = this.scene.add.graphics({fillStyle: {color: GRID_POINT_COLOR}})
-        this.gridPointGraphics.setAlpha(0)
         this.gridPointLayer = this.scene.add.layer(this.gridPointGraphics)
         this.gridPointLayer.setDepth(0)
-        this.updateGridRender()
 
         // Set up connectors
         this.connectorImages = this.scene.add.container()
@@ -116,15 +114,6 @@ export class Grid implements AStarGrid {
         return this.getUnitSize(gridSize) / 200
     }
 
-    blendIn(): Tween {
-        return this.scene.tweens.add({
-            targets: this.gridPointGraphics,
-            alpha: 1,
-            duration: 1000,
-            ease: Phaser.Math.Easing.Quadratic.InOut
-        })
-    }
-
     isFreeAt(v: Vec2, comingFrom: Vec2): boolean {
         return !this.itemMap.has(v)
             && !this.inConnectorMap.has(v)
@@ -149,6 +138,7 @@ export class Grid implements AStarGrid {
     addConnection(connection: Connection) {
         let startIsSource = this.hasFreeOutputAt(connection.getStartIndex())
         connection.setSourceAndConsumerData(startIsSource)
+        connection.fixate()
         this.connections.push(connection)
 
         let outConnectorEntry = this.outConnectorMap.get(connection.getSourceIndex()!)!
@@ -274,25 +264,23 @@ export class Grid implements AStarGrid {
     }
 
     showGrid() {
-        this.gridPointGraphics.setAlpha(1)
+        this.gridPointGraphics.clear();
+        for (let x = this.minColIndex; x <= this.maxColIndex; x++) {
+            for (let y = this.minRowIndex; y <= this.maxRowIndex; y++) {
+                const index = { x, y };
+                const pos = this.getPositionForIndex(index);
+                if (!this.itemMap.has(index)) {
+                    this.gridPointGraphics.fillCircle(pos.x, pos.y, GRID_POINT_SIZE * Grid.getUnitSize(this.gridSize));
+                }
+            }
+        }
+        this.gridPointGraphics.generateTexture('gridPointTexture', GAME_WIDTH, GAME_HEIGHT);
+        this.gridPointGraphics.clear()
+        this.scene.add.image(0, 0, 'gridPointTexture').setOrigin(0, 0)
     }
 
     getItemAtIndex(index: Vec2): Item | undefined {
         return this.itemMap.get(index)
-    }
-
-    private updateGridRender() {
-        this.gridPointGraphics.clear()
-        for (let x = this.minColIndex; x <= this.maxColIndex; x++) {
-            for (let y = this.minRowIndex; y <= this.maxRowIndex; y++) {
-                var index = {x: x, y: y}
-                var pos = this.getPositionForIndex(index)
-                if (!this.itemMap.has(index)) {
-                    this.gridPointGraphics.fillCircle(pos.x, pos.y, GRID_POINT_SIZE * Grid.getUnitSize(this.gridSize))
-                }
-
-            }
-        }
     }
 
     getConnections() {

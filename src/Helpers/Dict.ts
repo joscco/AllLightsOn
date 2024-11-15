@@ -25,11 +25,11 @@ export class Dict<K, V> {
     }
 
     deleteAllWithValue(v: V): void {
-        this.map.forEach(([key, val]) => {
+        for (const [key, val] of this.map.values()) {
             if (val === v) {
                 this.map.delete(this.toIdString(key));
             }
-        });
+        }
     }
 
     delete(k: K): void {
@@ -41,8 +41,8 @@ export class Dict<K, V> {
     }
 
     getEntriesWith(lambda?: (k: K, v: V) => boolean): Array<[K, V]> {
-        let entries: [K, V][] = [];
-        for (let [_, [key, value]] of this.map.entries()) {
+        const entries: [K, V][] = [];
+        for (const [key, value] of this.map.values()) {
             if (!lambda || lambda(key, value)) {
                 entries.push([key, value]);
             }
@@ -51,23 +51,23 @@ export class Dict<K, V> {
     }
 
     values(): Array<V> {
-        let entries: V[] = [];
-        for (let [_id, [_key, value]] of this.map.entries()) {
+        const entries: V[] = [];
+        for (const [, value] of this.map.values()) {
             entries.push(value);
         }
         return entries;
     }
 
     keys(): Array<K> {
-        let entries: K[] = [];
-        for (let [_id, [key, _value]] of this.map.entries()) {
+        const entries: K[] = [];
+        for (const [key] of this.map.values()) {
             entries.push(key);
         }
         return entries;
     }
 
     copy(): Dict<K, V> {
-        return new Dict<K, V>((key: K) => this.toIdString(key), this);
+        return new Dict<K, V>(this.toIdString, this);
     }
 }
 

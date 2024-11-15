@@ -16,7 +16,7 @@ export class Light extends Item {
         this.sprite!.setPosition(0, -67)
 
         this.onSprite = this.scene.add.image(0, -67, 'light_on')
-        this.overlay = this.scene.add.image(0, -110, 'light_overlay')
+        this.overlay = this.scene.add.image(0, -170, 'light_overlay')
         this.add([this.overlay, this.onSprite])
         this.setOn(false, true)
     }
@@ -66,7 +66,7 @@ export class Light extends Item {
         return false
     }
 
-    setOn(value: boolean, instant: boolean = false) {
+    private setOn(value: boolean, instant: boolean = false) {
         this._isOn = value;
         let alphaValue = this._isOn ? 1 : 0
 
@@ -81,8 +81,6 @@ export class Light extends Item {
                 ease: Phaser.Math.Easing.Quadratic.InOut
             })
         }
-
-
     }
 
     isOn(): boolean {

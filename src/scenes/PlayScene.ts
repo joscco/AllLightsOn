@@ -42,7 +42,6 @@ export default class PlayScene extends Phaser.Scene {
     }
 
     create() {
-        console.log("Setting up level");
         this.createHeading();
         this.createGrid();
         this.createDragContainer();
@@ -110,8 +109,8 @@ export default class PlayScene extends Phaser.Scene {
             this,
             GAME_WIDTH / 2,
             GAME_HEIGHT / 2 + 50,
-            GAME_WIDTH - 50,
-            GAME_HEIGHT - 200 - 100,
+            10,
+            10,
             GridSize.L
         );
         this.grid.showGrid();
