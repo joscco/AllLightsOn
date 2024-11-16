@@ -5,9 +5,11 @@ import {LEVEL_3} from "./level3";
 import {LEVEL_4} from "./level4";
 import {LEVEL_5} from "./level5";
 import {LEVEL_6} from "./level6";
+import {GridSize} from "../gameobjects/Grid";
 
 export interface LevelConfig {
     title?: string;
+    size?: GridSize;
     rows: number;
     columns: number;
     items: Array<{

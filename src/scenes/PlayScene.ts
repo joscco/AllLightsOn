@@ -56,7 +56,7 @@ export default class PlayScene extends Phaser.Scene {
 
     private setupLevel(config: LevelConfig) {
         this.createHeading(config.title ?? "Turn on all Lights");
-        this.createGrid(config.columns, config.rows);
+        this.createGrid(config.columns, config.rows, config.size ?? GridSize.S);
         this.createDragContainer();
         this.defineItemLogic();
         this.powerForwarder = new PowerForwarder(this.grid!);
@@ -103,13 +103,13 @@ export default class PlayScene extends Phaser.Scene {
         text.setOrigin(0.5, 0.5);
     }
 
-    private createGrid(columns: number, rows: number) {
+    private createGrid(columns: number, rows: number, size: GridSize) {
         this.grid = new Grid(
             this,
             GAME_WIDTH / 2,
-            GAME_HEIGHT / 2 + 50,
+            GAME_HEIGHT / 2,
             columns, rows,
-            GridSize.L
+            size
         );
         this.grid.showGrid();
         this.pathFinder = new AStarFinder();
