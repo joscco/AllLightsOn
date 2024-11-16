@@ -24,7 +24,7 @@ const TEXT_STYLE = {
 };
 
 export default class PlayScene extends Phaser.Scene {
-    private grid?: Grid;
+    protected grid?: Grid;
     private pathFinder?: AStarFinder;
     private powerForwarder?: PowerForwarder;
     private pressed: boolean = false;
@@ -37,8 +37,8 @@ export default class PlayScene extends Phaser.Scene {
 
     private showingWinScreen: boolean = false
 
-    constructor() {
-        super({key: 'PlayScene'});
+    constructor(key: string = 'PlayScene') {
+        super({key: key});
     }
 
     init(data: {level: number}) {
