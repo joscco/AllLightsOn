@@ -11,8 +11,12 @@ export const GAME_HEIGHT = 1080;
 export const ITEM_FONT = 'ItemFont';
 
 export const GAME_CONFIG: GameConfig = {
-    type: Phaser.AUTO,
+    type: Phaser.CANVAS,
     parent: 'game',
+    fps: {
+        target: 30,
+        forceSetTimeOut: false
+    },
     transparent: true,
     roundPixels: false,
     plugins: {
