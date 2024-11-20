@@ -22,10 +22,8 @@ export const OUT_CONNECTOR_INNER_USED_COLOR = GameColors.DARK_BLUE
 export const OUT_CONNECTOR_INNER_UNUSED_COLOR = GameColors.DARK_BLUE
 export const UNUSED_CONNECTION_COLOR = GameColors.ORANGE
 export const USED_CONNECTION_COLOR = GameColors.LIGHT_ORANGE
-export const ELECTRON_COLOR = GameColors.LIGHT
 
 export const CONNECTOR_INSIDE_POINT_SIZE = 0.2
-export const ELECTRON_SIZE = 0.2
 export const LINE_SIZE = 0.18
 
 export class Connection extends Container {
@@ -49,15 +47,17 @@ export class Connection extends Container {
     private pathGraphics: Graphics
 
     private showingElectrons: boolean = false
-    private lastElectronIndex: number = 0
-    private electronGraphics: Graphics
-    private electronMsPerNode: number = 50;
-    private minWaitingTimeForNextElectron = 500;
+    private t: number = 0
+    private lastElectronIndex: number = -1
+    private electronMoveTween?: Phaser.Tweens.Tween
+    private electronImage: Image
+    private electronMsPerNode: number = 80;
+    private minWaitingTimeForNextElectron = 1000;
     private lastElectronChange: number
     private lastRoundStart: number;
     private lineSize: number
-    private electronSize: number
     private connectorPointSize: number
+    private electronTimerEvent?: Phaser.Time.TimerEvent;
 
     constructor(scene: Phaser.Scene, gridUnitSize: number) {
         super(scene)
@@ -72,17 +72,25 @@ export class Connection extends Container {
         this.offGraph = scene.add.image(0, 0, "").setOrigin(0, 0)
         this.offGraph.setVisible(false)
         this.offGraph.setDepth(DEPTHS.CONNECTIONS)
-        this.electronGraphics = scene.add.graphics({
-            fillStyle: {
-                color: ELECTRON_COLOR
-            }
-        })
-        this.electronGraphics.setDepth(DEPTHS.ELECTRONS)
 
-        this.add([this.onGraph, this.offGraph, this.pathGraphics, this.electronGraphics])
         this.lineSize = gridUnitSize * LINE_SIZE
-        this.electronSize = gridUnitSize * ELECTRON_SIZE
         this.connectorPointSize = gridUnitSize * CONNECTOR_INSIDE_POINT_SIZE
+
+        this.electronImage = scene.add.image(0, 0, "electron")
+        this.electronImage.setScale(0)
+        this.electronImage.setDepth(DEPTHS.ELECTRONS)
+        this.add([this.onGraph, this.offGraph, this.pathGraphics, this.electronImage])
+
+        this.createElectronTimer();
+    }
+
+    private createElectronTimer() {
+        this.electronTimerEvent = this.scene.time.addEvent({
+            delay: this.electronMsPerNode,
+            callback: this.updateElectronPosition,
+            callbackScope: this,
+            loop: true
+        });
     }
 
     getStart(): Item | undefined {
@@ -127,8 +135,8 @@ export class Connection extends Container {
     draw() {
         if (!this.isDirectedWithPower() || !this.end) {
             this.showingElectrons = false
-            this.electronGraphics.clear()
-            this.lastElectronIndex = 0
+            this.electronImage.setScale(0)
+            this.lastElectronIndex = -1
         } else {
             this.showingElectrons = true
         }
@@ -203,48 +211,44 @@ export class Connection extends Container {
         }
     }
 
-    update(now: number) {
-        if (!this.showingElectrons || now <= this.lastElectronChange + this.electronMsPerNode) {
-            return
-        }
-        this.lastElectronChange = now
-
-        this.electronGraphics.clear()
-        let isAtEnd = this.startIsSource
-            ? (this.lastElectronIndex == this.posPath.length - 1)
-            : (this.lastElectronIndex == 0)
-        if (isAtEnd && now < this.lastRoundStart + this.minWaitingTimeForNextElectron) {
-            // Last position was reached and new electron cannot be fired. Wait
-            return
+    private updateElectronPosition() {
+        if (!this.showingElectrons) {
+            return;
         }
 
-        let isAtStart = this.startIsSource
-            ? (this.lastElectronIndex == 0)
-            : (this.lastElectronIndex == this.posPath.length - 1)
-        if (isAtStart) {
-            this.lastRoundStart = now
-        }
+        this.electronImage.setScale(1)
+        this.t = (this.t +  0.1) % 1
+        let point = this.graphicsPath!.getPoint(this.t)
+        this.electronImage.setPosition(point.x, point.y)
 
-        let currentPosition = this.posPath[this.lastElectronIndex]
-        let secondNextPosition: Vec2
-        if (this.startIsSource) {
-            secondNextPosition = this.posPath[this.lastElectronIndex + 2]
-            this.lastElectronIndex = mod(this.lastElectronIndex + 1, this.posPath.length)
-        } else {
-            secondNextPosition = this.posPath[this.lastElectronIndex - 2]
-            this.lastElectronIndex = mod(this.lastElectronIndex - 1, this.posPath.length)
-        }
+        // if (isAtEnd || wasUndefined) {
+        //     this.electronImage.setPosition(newPos.x, newPos.y)
+        // } else if (isAtOneBeforeEnd) {
+        //     this.electronMoveTween?.stop()
+        //     this.electronMoveTween = this.scene.tweens.add({
+        //         targets: this.electronImage,
+        //         scaleX: 0.05,
+        //         scaleY: 0.05,
+        //         alpha: 0.05,
+        //         x: newPos.x,
+        //         y: newPos.y,
+        //         duration: this.electronMsPerNode,
+        //         ease: Phaser.Math.Easing.Sine.In
+        //     })
+        // } else {
+        //     this.electronMoveTween?.stop()
+        //     this.electronMoveTween = this.scene.tweens.add({
+        //         targets: this.electronImage,
+        //         scaleX: 1,
+        //         scaleY: 1,
+        //         alpha: 1,
+        //         x: newPos.x,
+        //         y: newPos.y,
+        //         duration: this.electronMsPerNode,
+        //         ease: Phaser.Math.Easing.Linear
+        //     })
+        // }
 
-        var nextPosition = this.posPath.at(this.lastElectronIndex)!
-        let newPos: Vec2
-        if (secondNextPosition && (currentPosition.x != secondNextPosition.x) && (currentPosition.y != secondNextPosition.y)) {
-            // Next is corner, align it correctly to fit the bezier
-            newPos = vec2Mean(nextPosition, vec2Mean(currentPosition, secondNextPosition))
-        } else {
-            newPos = nextPosition
-        }
-
-        this.electronGraphics.fillCircle(newPos.x, newPos.y, this.electronSize)
     }
 
     getStartIndex() {
@@ -284,7 +288,8 @@ export class Connection extends Container {
     }
 
     kill(immediate: boolean = false) {
-        this.electronGraphics.destroy()
+        this.electronImage.destroy()
+        this.electronTimerEvent?.destroy()
         this.onGraph.destroy()
         this.offGraph.destroy()
         if (immediate) {
@@ -316,6 +321,11 @@ export class Connection extends Container {
 
     // Will make the connection quicker to render by generating textures and eliminating the graphics
     fixate() {
+        if (!this.startIsSource) {
+            this.posPath = this.posPath.reverse()
+            this.indexPath = this.indexPath.reverse()
+            this.startIsSource = true
+        }
         this.setDirectedWithPower(PowerInfo.POWER_ON)
         this.drawGraphics()
         let onKey = "connection_on_" + this.sourceIndex!.x + "_" + this.sourceIndex!.y

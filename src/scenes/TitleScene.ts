@@ -47,7 +47,7 @@ export default class TitleScene extends Phaser.Scene {
         this.tweens.add({
             targets: startButton,
             y: GAME_HEIGHT / 2,
-            duration: 1000,
+            duration: 500,
             ease: 'Power2',
             delay: 200
         });
@@ -55,7 +55,7 @@ export default class TitleScene extends Phaser.Scene {
         this.tweens.add({
             targets: optionsButton,
             y: 700,
-            duration: 1000,
+            duration: 500,
             ease: 'Power2',
             delay: 400
         });
@@ -73,7 +73,7 @@ export default class TitleScene extends Phaser.Scene {
         this.tweens.add({
             targets: startButton,
             y: GAME_HEIGHT + 200,
-            duration: 1000,
+            duration: 500,
             ease: Phaser.Math.Easing.Quadratic.InOut,
             delay: 200
         });
@@ -81,7 +81,7 @@ export default class TitleScene extends Phaser.Scene {
         this.tweens.add({
             targets: title,
             y: GAME_HEIGHT + 100,
-            duration: 1000,
+            duration: 500,
             ease: Phaser.Math.Easing.Quadratic.InOut,
             delay: 400,
             onComplete: callback

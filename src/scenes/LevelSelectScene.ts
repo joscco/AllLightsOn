@@ -7,16 +7,21 @@ import Text = Phaser.GameObjects.Text;
 export default class LevelSelectScene extends Phaser.Scene {
     private title?: Text;
     private buttons?: TextButton[];
+
     constructor() {
-        super({ key: 'LevelSelectScene' });
+        super({key: 'LevelSelectScene'});
     }
 
     create() {
-        this.title = this.add.text(GAME_WIDTH / 2, -100, 'Select Level', { fontFamily: 'ItemFont', fontSize: '64px', color: '#fff' }).setOrigin(0.5);
+        this.title = this.add.text(GAME_WIDTH / 2, -100, 'Select Level', {
+            fontFamily: 'ItemFont',
+            fontSize: '64px',
+            color: '#fff'
+        }).setOrigin(0.5);
 
         this.buttons = [];
         for (let i = 0; i < LEVEL_DATA.length; i++) {
-            this.buttons.push(this.createLevelButton(i + 1, GAME_HEIGHT + 300));
+            this.buttons.push(this.createLevelButton(i + 1, GAME_HEIGHT));
         }
 
         this.fadeIn(this.title, this.buttons);
@@ -25,9 +30,10 @@ export default class LevelSelectScene extends Phaser.Scene {
     createLevelButton(level: number, y: number) {
         const button = new TextButton(this, GAME_WIDTH / 2, y, 250, 100, `Level ${level}`, () => {
             this.fadeOut(this.title!, this.buttons!, () => {
-                this.scene.start('PlayScene', { level });
+                this.scene.start('PlayScene', {level});
             });
         });
+        button.setAlpha(0)
         return button;
     }
 
@@ -43,7 +49,8 @@ export default class LevelSelectScene extends Phaser.Scene {
             this.tweens.add({
                 targets: button,
                 y: 250 + index * 130,
-                duration: 1000,
+                alpha: 1,
+                duration: 500,
                 ease: 'Power2',
                 delay: 200 + index * 100
             });
@@ -51,15 +58,18 @@ export default class LevelSelectScene extends Phaser.Scene {
     }
 
     private fadeOut(title: Phaser.GameObjects.Text, buttons: TextButton[], callback: () => void) {
-        buttons.forEach((button, index) => {
-            this.tweens.add({
-                targets: button,
-                y: GAME_HEIGHT + 100,
-                duration: 1000,
-                ease: Phaser.Math.Easing.Quadratic.InOut,
-                delay: index * 100
+        buttons.slice()
+            .reverse()
+            .forEach((button, index) => {
+                this.tweens.add({
+                    targets: button,
+                    y: GAME_HEIGHT,
+                    alpha: 0,
+                    duration: 500,
+                    ease: Phaser.Math.Easing.Quadratic.InOut,
+                    delay: index * 100
+                });
             });
-        });
 
         this.tweens.add({
             targets: title,

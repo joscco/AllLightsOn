@@ -200,6 +200,7 @@ export class Grid implements AStarGrid {
         for (let i = 0; i < indexPath.length - 1; i++) {
             pathsWithBetweens.push(indexPath[i], vec2Mean(indexPath[i], indexPath[i + 1]))
         }
+
         pathsWithBetweens.push(indexPath.at(-1)!)
 
         return pathsWithBetweens.map(index => this.getPositionForIndex(index))

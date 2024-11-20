@@ -52,14 +52,16 @@ export class WinScreen extends Phaser.GameObjects.Container {
         // Set depth to ensure it is above all other elements
         this.setDepth(DEPTHS.WIN_SCREEN);
 
+        scene.add.existing(this);
+    }
+
+    fadeIn() {
         // Animate the win screen to blend in from below
-        scene.tweens.add({
+        this.scene.tweens.add({
             targets: this,
             y: GAME_HEIGHT - 200,
             duration: 400,
             ease: Phaser.Math.Easing.Back.InOut
         });
-
-        scene.add.existing(this);
     }
 }

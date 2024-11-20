@@ -1,22 +1,20 @@
 import Phaser from 'phaser';
-import {Light} from "../gameobjects/Items/Light";
-import {Power} from "../gameobjects/Items/Power";
-import {Stopper} from "../gameobjects/Items/Stopper";
-import {Grid, GridSize} from "../gameobjects/Grid";
-import {Connection, PowerInfo} from "../gameobjects/Connection";
-import {Vec2, vec2Equals} from "../Helpers/VecMath";
-import {Or} from "../gameobjects/Items/Or";
-import {AStarFinder} from "../AStar/AStarFinder";
-import {And} from "../gameobjects/Items/And";
-import {Not} from "../gameobjects/Items/Not";
-import {Splitter} from "../gameobjects/Items/Splitter";
-import {SwitchIn} from "../gameobjects/Items/SwitchIn";
-import {SwitchOut} from "../gameobjects/Items/SwitchOut";
-import {GAME_HEIGHT, GAME_WIDTH} from "../index";
-import {PowerForwarder} from "../gameobjects/PowerForwarder";
-import {LEVEL_DATA, LevelConfig} from "../levels/LevelConfig";
+import {Grid, GridSize} from '../gameobjects/Grid';
+import {LEVEL_DATA, LevelConfig} from '../levels/LevelConfig';
+import {GridInteractionHandler} from '../gameobjects/GridInteractionHandler';
+import {PowerForwarder} from '../gameobjects/PowerForwarder';
+import {Light} from '../gameobjects/Items/Light';
+import {Power} from '../gameobjects/Items/Power';
+import {Stopper} from '../gameobjects/Items/Stopper';
+import {Or} from '../gameobjects/Items/Or';
+import {And} from '../gameobjects/Items/And';
+import {Not} from '../gameobjects/Items/Not';
+import {Splitter} from '../gameobjects/Items/Splitter';
+import {SwitchIn} from '../gameobjects/Items/SwitchIn';
+import {SwitchOut} from '../gameobjects/Items/SwitchOut';
+import {GAME_HEIGHT, GAME_WIDTH} from '../index';
+import {PowerInfo} from "../gameobjects/Connection";
 import {WinScreen} from "../gameobjects/WinScreen";
-import Vector2 = Phaser.Math.Vector2;
 
 const TEXT_STYLE = {
     fontFamily: "ItemFont",
@@ -24,41 +22,37 @@ const TEXT_STYLE = {
 };
 
 export default class PlayScene extends Phaser.Scene {
-    protected grid?: Grid;
-    private pathFinder?: AStarFinder;
+    private level?: number;
+    private levelData?: LevelConfig;
+    private isShowingWinScreen: boolean = false;
     private powerForwarder?: PowerForwarder;
-    private pressed: boolean = false;
-    private connection?: Connection;
-    private indexPath: Vec2[] = [];
-    private lastIndexForHover?: Vec2;
-    private newConnection: boolean = false;
-    private level?: number
-    private levelData?: LevelConfig
-
-    private showingWinScreen: boolean = false
+    private grid?: Grid;
+    private gridInteractionHandler?: GridInteractionHandler;
+    private winScreen?: WinScreen
 
     constructor(key: string = 'PlayScene') {
         super({key: key});
     }
 
     init(data: {level: number}) {
-        this.level = data.level
-        this.levelData = LEVEL_DATA[this.level - 1]
-        this.pressed = false
-        this.newConnection= false
-        this.showingWinScreen = false
-        this.indexPath = []
+        this.level = data.level;
+        this.levelData = LEVEL_DATA[this.level - 1];
+        this.isShowingWinScreen = false;
     }
 
     create() {
-        this.setupLevel(this.levelData!)
+        this.setupLevel(this.levelData!);
     }
 
     private setupLevel(config: LevelConfig) {
         this.createHeading(config.title ?? "Turn on all Lights");
         this.createGrid(config.columns, config.rows, config.size ?? GridSize.S);
-        this.createDragContainer();
-        this.defineItemLogic();
+        this.createWinScreen()
+        this.gridInteractionHandler = new GridInteractionHandler(
+            this,
+            this.grid!,
+            () => this.checkSources()
+        );
         this.powerForwarder = new PowerForwarder(this.grid!);
         config.items.forEach((item: any) => {
             const {type, position} = item;
@@ -94,10 +88,6 @@ export default class PlayScene extends Phaser.Scene {
         });
     }
 
-    update(time: number) {
-        this.grid!.getConnections().forEach(con => con.update(time));
-    }
-
     private createHeading(heading: string) {
         let text = this.add.text(GAME_WIDTH / 2, 100, heading, TEXT_STYLE);
         text.setOrigin(0.5, 0.5);
@@ -112,200 +102,6 @@ export default class PlayScene extends Phaser.Scene {
             size
         );
         this.grid.showGrid();
-        this.pathFinder = new AStarFinder();
-    }
-
-    private createDragContainer() {
-        let dragContainer = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0, 0);
-        dragContainer.setInteractive();
-    }
-
-    private defineItemLogic() {
-        this.input.on('pointerdown', (pointer: Vector2) => {if (!this.showingWinScreen) this.onPointerDown(pointer)});
-        this.input.on('pointermove', (pointer: Vector2) =>{if (!this.showingWinScreen) this.onPointerMove(pointer)});
-        this.input.on('pointerup', (pointer: Vector2) => {if (!this.showingWinScreen)this.onPointerUp(pointer)});
-        this.input.on('pointerupoutside', (pointer: Vector2) => {if (!this.showingWinScreen)this.onPointerUp(pointer)});
-    }
-
-    private onPointerDown(pointer: Phaser.Math.Vector2) {
-        this.pressed = true;
-        let index = this.grid!.getIndexForPosition(pointer);
-        let item = this.grid!.getItemAtIndex(index) ?? this.grid!.getConnectorAtIndex(index)?.item;
-        if (item) {
-            this.connection = new Connection(this, this.grid!.getUnitSize());
-            this.grid!.addConnectionToLayer(this.connection);
-            this.connection.setStart(item);
-            this.indexPath = [this.grid!.getIndexForPosition(pointer)];
-            this.newConnection = true;
-            this.onPointerMove(pointer);
-        }
-    }
-
-    private onPointerMove(pointer: Phaser.Math.Vector2) {
-        if (!this.pressed || !this.connection) {
-            return;
-        }
-
-        let indexForPointer = this.grid!.getIndexForPosition(pointer);
-        if (!this.newConnection && indexForPointer
-            && this.lastIndexForHover
-            && vec2Equals(this.lastIndexForHover, indexForPointer)) {
-            return;
-        }
-
-        this.newConnection = false;
-        this.lastIndexForHover = indexForPointer;
-
-        let existingConnection = this.grid?.getConnectionForConnectorIndex(indexForPointer);
-        if (existingConnection) {
-            this.handleExistingConnection(existingConnection, indexForPointer);
-            return;
-        }
-
-        this.indexPath = this.addPointToPath(indexForPointer, this.indexPath);
-        this.updateConnectionPath();
-    }
-
-    private handleExistingConnection(existingConnection: Connection, indexForPointer: Vec2) {
-        let hoveredItem = this.grid!.getConnectorAtIndex(indexForPointer)?.item!;
-        if ([existingConnection.getStart(), existingConnection.getEnd()].some(item => this.connection!.getStart()! == item)) {
-            let otherItem = [existingConnection.getStart(), existingConnection.getEnd()]
-                .find(item => item != hoveredItem)!;
-            if (hoveredItem == existingConnection.getStart()) {
-                this.indexPath = existingConnection.getIndexPath().reverse();
-            } else {
-                this.indexPath = existingConnection.getIndexPath();
-            }
-            this.connection!.setStart(otherItem);
-            this.connection!.setEnd(hoveredItem);
-            this.grid!.removeConnection(existingConnection);
-            this.checkSources();
-
-            let posPath = this.grid!.calculatePosPathFromIndices(this.indexPath);
-            this.connection!.setPath(posPath, this.indexPath);
-            this.connection!.draw();
-        }
-    }
-
-    private updateConnectionPath() {
-        let startIndex = this.indexPath.slice().reverse().findIndex(index => {
-            let connector = this.grid!.getConnectorAtIndex(index);
-            return connector && connector.item == this.connection!.getStart();
-        });
-
-        if (startIndex > -1) {
-            this.indexPath = this.indexPath.slice(this.indexPath.length - 1 - startIndex);
-            this.trimInvalidPath();
-            this.setConnectionEnd();
-        } else {
-            this.indexPath = [];
-        }
-
-        let posPath = this.grid!.calculatePosPathFromIndices(this.indexPath);
-        this.connection!.setPath(posPath, this.indexPath);
-        this.connection!.draw();
-    }
-
-    private trimInvalidPath() {
-        let firstInvalidIndex = this.indexPath.findIndex(index => {
-            return (this.grid!.getItemAtIndex(index) != undefined) || (this.grid?.getConnectorAtIndex(index)?.used);
-        });
-        if (firstInvalidIndex > -1) {
-            this.indexPath = this.indexPath.slice(0, firstInvalidIndex);
-        }
-    }
-
-    private setConnectionEnd() {
-        let firstEndIndex = this.indexPath.findIndex(index => {
-            let connector = this.grid!.getConnectorAtIndex(index);
-            if (connector && connector.item != this.connection!.getStart()) {
-                return true;
-            }
-        });
-        if (firstEndIndex > -1) {
-            this.extendPathToEnd(firstEndIndex);
-            this.validateConnectionEnd();
-        } else {
-            this.connection!.resetEnd();
-        }
-    }
-
-    private extendPathToEnd(firstEndIndex: number) {
-        if (this.indexPath.length - 1 != firstEndIndex) {
-            let pathToAdd = this.pathFinder!.findPath(this.grid!, this.indexPath[firstEndIndex - 1], this.indexPath.at(-1)!);
-            this.indexPath = this.removeDuplicates(pathToAdd, this.indexPath.slice(0, firstEndIndex));
-        }
-    }
-
-    private validateConnectionEnd() {
-        let startIndex = this.indexPath[0];
-        let endIndex = this.indexPath.at(-1)!;
-        let itemAtEnd = this.grid!.getConnectorAtIndex(endIndex)?.item;
-
-        if (this.grid?.hasFreeInputAt(startIndex) && this.grid?.hasFreeOutputAt(endIndex)) {
-            this.connection!.setEnd(itemAtEnd);
-        } else if (this.grid?.hasFreeOutputAt(startIndex) && this.grid?.hasFreeInputAt(endIndex)) {
-            this.connection!.setEnd(itemAtEnd);
-        } else {
-            itemAtEnd?.wiggle();
-            this.connection!.resetEnd();
-        }
-    }
-
-    private onPointerUp(pointer: Vector2) {
-        this.pressed = false;
-        let item = this.grid?.getItemAtIndex(this.grid?.getIndexForPosition(pointer));
-        if (item && (!this.connection || item == this.connection?.getStart())) {
-            item.onClick();
-            this.checkSources();
-            this.connection?.kill();
-            this.connection = undefined;
-        } else if (this.connection) {
-            this.finalizeConnection();
-        }
-    }
-
-    private finalizeConnection() {
-        if (this.connection!.getStart() && this.connection!.getEnd() && !this.grid!.hasConnection(this.connection!)) {
-            this.grid!.addConnection(this.connection!);
-            this.checkSources();
-            this.connection = undefined;
-        } else {
-            this.connection?.getEnd()?.wiggle();
-            this.connection?.getStart()?.wiggle();
-            this.connection?.kill();
-            this.connection = undefined;
-        }
-    }
-
-    private addPointToPath(indexForPointer: Vec2, switcherPath: Vec2[]): Vec2[] {
-        let lastIndex = switcherPath.at(-1);
-        let newIndices: Vec2[] = [];
-        if (!lastIndex
-            || (this.grid?.isFreeAt(indexForPointer, lastIndex)
-                && Math.abs(indexForPointer.x - lastIndex.x) + Math.abs(indexForPointer.y - lastIndex.y) == 1)
-        ) {
-            newIndices.push(indexForPointer);
-        } else {
-            newIndices = this.pathFinder!.findPath(this.grid!, lastIndex, indexForPointer);
-        }
-
-        switcherPath = this.removeDuplicates(newIndices, switcherPath);
-        return switcherPath;
-    }
-
-    private removeDuplicates(newIndices: Vec2[], switcherPath: Vec2[]): Vec2[] {
-        for (let newIndex of newIndices) {
-            let previousOccurrenceInPath = switcherPath.findIndex(index => vec2Equals(index, newIndex));
-            if (previousOccurrenceInPath > -1) {
-                if (previousOccurrenceInPath != switcherPath.length - 1) {
-                    switcherPath = switcherPath.slice(0, Math.max(previousOccurrenceInPath + 1, 1));
-                }
-            } else {
-                switcherPath.push(newIndex);
-            }
-        }
-        return switcherPath;
     }
 
     private checkSources() {
@@ -316,13 +112,21 @@ export default class PlayScene extends Phaser.Scene {
             this.powerForwarder!.forwardPower(PowerInfo.POWER_ON, powerSource, this.grid!.getConnections());
         }
 
+        this.checkWinCondition();
+    }
+
+    private checkWinCondition() {
         if (this.grid!.getItems().filter(item => item.isLightBulb()).every(bulb => (bulb as Light).isOn())) {
             this.showWinScreen();
         }
     }
 
     private showWinScreen() {
-        this.showingWinScreen = true
-        new WinScreen(this, (LEVEL_DATA.length == this.level) ? undefined : this.level! + 1)
+        this.isShowingWinScreen = true;
+        this.winScreen!.fadeIn();
+    }
+
+    private createWinScreen() {
+        this.winScreen = new WinScreen(this, (LEVEL_DATA.length == this.level) ? undefined : this.level! + 1);
     }
 }

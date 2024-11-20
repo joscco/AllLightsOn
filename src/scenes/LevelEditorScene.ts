@@ -1,7 +1,9 @@
 import PlayScene from './PlayScene';
 import {Vec2} from "../Helpers/VecMath";
+import {GAME_HEIGHT} from "../index";
+import {Scene} from "phaser";
 
-export class LevelEditorScene extends PlayScene {
+export class LevelEditorScene extends Scene {
     constructor() {
         super('LevelEditorScene');
     }
@@ -17,7 +19,7 @@ export class LevelEditorScene extends PlayScene {
 
     createToolbar() {
         // Create a toolbar at the bottom with draggable items
-        // Example: this.add.image(x, y, 'itemTexture').setInteractive({ draggable: true });
+        this.add.image(100, GAME_HEIGHT - 200, 'itemTexture').setInteractive({ draggable: true });
     }
 
     setupDragAndDrop() {
