@@ -295,7 +295,7 @@ export class Connection extends Container {
                     this.graphicsPath = this.calculateGraphicsPath()
                     this.drawGraphics()
                 }
-            }, 150 / this.posPath.length)
+            }, Math.min(50, 300 / this.posPath.length))
         }
 
     }

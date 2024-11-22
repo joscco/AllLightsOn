@@ -3,7 +3,7 @@ import TweenChain = Phaser.Tweens.TweenChain;
 import Container = Phaser.GameObjects.Container;
 import {Scene} from "phaser";
 import {Connection, PowerInfo} from "../gameobjects/Connection";
-import {Vec2} from "../Helpers/VecMath";
+import {Vec2, vec2Add} from "../Helpers/VecMath";
 import {DEPTHS} from "../Helpers/Depths";
 import {GridSize} from "../gameobjects/Grid";
 
@@ -48,6 +48,20 @@ export abstract class Item extends Container {
 
     constructor(scene: Scene, texture: string | null) {
         super(scene, 0, 0);
+
+        // Set connectors
+        for (let i = 0; i < this.getNumberOfInputs(); i++) {
+            let offsetPosition = {x: -this.getColWidth() * 100, y: -(this.getRowHeight()-1) * 100 + i * 200}
+            let connector = this.scene.add.image(offsetPosition.x, offsetPosition.y, 'connector_plus')
+            this.add(connector)
+        }
+
+        for (let j = 0; j < this.getNumberOfOutputs(); j++) {
+            let offsetPosition = {x: this.getColWidth() * 100, y: -(this.getRowHeight()-1) * 100 + j * 200}
+            let connector = this.scene.add.image(offsetPosition.x, offsetPosition.y, 'connector_minus')
+            this.add(connector)
+        }
+
         // Slight offset to top because of the bottom border
         this.base = scene.add.image(0, 0, this.getBaseTexture(this.getRowHeight(), this.getColWidth()))
         this.add(this.base)
@@ -57,6 +71,7 @@ export abstract class Item extends Container {
             this.add(this.sprite)
         }
         this.setDepth(DEPTHS.ITEMS)
+        this.setScale(0)
     }
 
     setGridSize(gridSize: GridSize) {

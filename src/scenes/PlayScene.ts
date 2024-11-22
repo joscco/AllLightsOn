@@ -87,7 +87,6 @@ export default class PlayScene extends Phaser.Scene {
                     item = new SwitchOut(this, false);
                     break;
             }
-            item!.setAlpha(0)
             item!.setGridSize(this.grid!.getGridSize());
             this.grid!.addItemAtIndex(position, item!);
         });
@@ -136,6 +135,8 @@ export default class PlayScene extends Phaser.Scene {
     }
 
     private createWinScreen() {
-        this.winScreen = new WinScreen(this, (LEVEL_DATA.length == this.level) ? undefined : this.level! + 1);
+        this.winScreen = new WinScreen(this,
+            this.grid!,
+            (LEVEL_DATA.length == this.level) ? undefined : this.level! + 1);
     }
 }

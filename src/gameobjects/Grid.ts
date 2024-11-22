@@ -60,13 +60,10 @@ export class Grid implements AStarGrid {
     // Depth 1
     private items: Item[] = []
     private itemLayer: Layer
-
     private itemMap: Vector2Dict<Item> = new Vector2Dict()
     private inConnectorMap: Vector2Dict<ConnectorInUsed> = new Vector2Dict()
     private outConnectorMap: Vector2Dict<ConnectorInUsed> = new Vector2Dict()
-    private connectorImages: Container
 
-    private connectorPointLayer: Layer
     // Depth 2
     private connections: Connection[] = []
     private connectionNodePairs: Vector2PairDict<Connection> = new Vector2PairDict<Connection>()
@@ -93,14 +90,9 @@ export class Grid implements AStarGrid {
         this.gridPointLayer = this.scene.add.layer(this.gridPointGraphics)
         this.gridPointLayer.setDepth(DEPTHS.GRID)
 
-        // Set up connectors
-        this.connectorImages = this.scene.add.container()
-        this.connectorPointLayer = this.scene.add.layer([this.connectorImages])
-        this.connectorPointLayer.setDepth(DEPTHS.CONNECTORS)
-
         // Set up connections
         this.connectionLayer = this.scene.add.layer()
-        this.connectionLayer.setDepth(DEPTHS.CONNECTORS)
+        this.connectionLayer.setDepth(DEPTHS.CONNECTIONS)
 
         // Set up item layer
         this.itemLayer = this.scene.add.layer()
@@ -221,29 +213,20 @@ export class Grid implements AStarGrid {
         item.setPosition(center.x, center.y)
         item.setIndex(bottomLeftIndex)
         item.setDepth(bottomLeftIndex.y)
-        item.setScale(this.gridSize.relativeScale)
 
         // Set connectors
         let leftBottomIndex = {x: bottomLeftIndex.x, y: bottomLeftIndex.y}
         for (let i = 0; i < item.getNumberOfInputs(); i++) {
             let offsetIndex = vec2Add(leftBottomIndex, {x: -1, y: i})
             item.addIncomingConnectorIndex(offsetIndex)
-            let offsetPosition = this.getPositionForIndex(offsetIndex)
             this.inConnectorMap.set(offsetIndex, {item: item, used: false, isInput: true})
-            let connector = this.scene.add.image(offsetPosition.x + 0.53 * this.colWidth, offsetPosition.y, 'connector_plus')
-            connector.setScale(this.gridSize.relativeScale)
-            this.connectorImages.add(connector)
         }
 
         let rightTopIndex = {x: bottomLeftIndex.x + item.getColWidth() - 1, y: bottomLeftIndex.y}
         for (let j = 0; j < item.getNumberOfOutputs(); j++) {
             let offsetIndex = vec2Add(rightTopIndex, {x: 1, y: j})
             item.addOutgoingConnectorIndex(offsetIndex)
-            let offsetPosition = this.getPositionForIndex(offsetIndex)
             this.outConnectorMap.set(offsetIndex, {item: item, used: false, isInput: false})
-            let connector = this.scene.add.image(offsetPosition.x - 0.53 * this.colWidth, offsetPosition.y, 'connector_minus')
-            connector.setScale(this.gridSize.relativeScale);
-            this.connectorImages.add(connector)
         }
     }
 
@@ -264,12 +247,13 @@ export class Grid implements AStarGrid {
     fadeInItems() {
         let fadeInTimeline = new TweenTimeline({
             scene: this.scene,
-            tweens: this.items.map(item => {
+            tweens: this.items.map((item, index) => {
                 return {
-                    at: 0,
+                    at: index * 100,
                     targets: item,
-                    alpha: 1,
-                    duration: 200
+                    scale: this.gridSize.relativeScale,
+                    ease: Phaser.Math.Easing.Back.Out,
+                    duration: 500
                 }
             })
         })
@@ -289,12 +273,10 @@ export class Grid implements AStarGrid {
             for (let y = this.minRowIndex; y <= this.maxRowIndex; y++) {
                 const index = {x, y};
                 const pos = this.getPositionForIndex(index);
-                if (!this.itemMap.has(index)) {
-                    const point = this.scene.add.image(pos.x, pos.y, 'singleGridPointTexture')
-                        .setScale(0)
-                        .setAlpha(0);
-                    this.points.push(point);
-                }
+                const point = this.scene.add.image(pos.x, pos.y, 'singleGridPointTexture')
+                    .setScale(0)
+                    .setAlpha(0);
+                this.points.push(point);
             }
         }
 
@@ -303,7 +285,7 @@ export class Grid implements AStarGrid {
             scene: this.scene,
             tweens: this.points!.map(point => {
                 return {
-                    at: (point.x - leftTopPosition.x) + (point.y - leftTopPosition.y),
+                    at: 0.5*((point.x - leftTopPosition.x) + (point.y - leftTopPosition.y)),
                     targets: point,
                     scale: 1,
                     alpha: 1,
@@ -316,24 +298,50 @@ export class Grid implements AStarGrid {
         }).asPromise()
     }
 
-    fadeOutGrid() {
-        const points = this.gridPointLayer.getAll() as Phaser.GameObjects.Image[];
-
-        points.forEach((point, i) => {
-            this.scene.tweens.add({
-                targets: point,
-                scale: 0,
-                alpha: 0,
-                duration: 300,
-                delay: i * 50,
-                onComplete: () => {
-                    if (i === points.length - 1) {
-                        this.gridPointGraphics.clear();
-                        this.gridImage?.destroy();
-                    }
+    async fadeOutItems() {
+        await new TweenTimeline({
+            scene: this.scene,
+            tweens: this.items.map((item, index) => {
+                return {
+                    at: index * 100,
+                    targets: item,
+                    scale: 0,
+                    ease: Phaser.Math.Easing.Back.In,
+                    duration: 500
                 }
-            });
-        });
+            }),
+            onComplete: () => {
+                this.items.forEach(item => item.destroy());
+                this.items = []
+            }
+        }).asPromise()
+    }
+
+    fadeOutConnections() {
+        this.connections.forEach(connection => connection.kill(false))
+    }
+
+    async fadeOutGrid() {
+        this.gridImage?.destroy()
+        this.points?.forEach(point => point.setVisible(true));
+
+        let leftTopPosition = this.getPositionForIndex({x: this.minColIndex, y: this.minRowIndex});
+        await new TweenTimeline({
+            scene: this.scene,
+            tweens: this.points!.map(point => {
+                return {
+                    at: 0.5*((point.x - leftTopPosition.x) + (point.y - leftTopPosition.y)),
+                    targets: point,
+                    scale: 0,
+                    alpha: 0,
+                    duration: 200
+                }
+            }),
+            onComplete: () => {
+                this.points?.forEach(point => point.destroy());
+                this.points = []
+            }
+        }).asPromise()
     }
 
     private replacePointsWithImage() {
@@ -342,9 +350,7 @@ export class Grid implements AStarGrid {
             for (let y = this.minRowIndex; y <= this.maxRowIndex; y++) {
                 const index = {x, y};
                 const pos = this.getPositionForIndex(index);
-                if (!this.itemMap.has(index)) {
-                    this.gridPointGraphics.fillCircle(pos.x, pos.y, GRID_POINT_SIZE * this.gridSize.unitSize);
-                }
+                this.gridPointGraphics.fillCircle(pos.x, pos.y, GRID_POINT_SIZE * this.gridSize.unitSize);
             }
         }
 
@@ -352,7 +358,7 @@ export class Grid implements AStarGrid {
         this.gridPointGraphics.generateTexture('gridPointsTexture', GAME_WIDTH, GAME_HEIGHT);
         this.gridPointGraphics.clear();
         this.gridImage = this.scene.add.image(0, 0, 'gridPointsTexture').setOrigin(0, 0);
-        this.points?.forEach(point => point.destroy());
+        this.points?.forEach(point => point.setVisible(false));
     }
 
     getItemAtIndex(index: Vec2): Item | undefined {

@@ -1,9 +1,11 @@
 import Phaser from 'phaser';
 import {GAME_WIDTH, GAME_HEIGHT} from '../index';
 import {DEPTHS} from "../Helpers/Depths";
+import {GridInteractionHandler} from "./GridInteractionHandler";
+import {Grid} from "./Grid";
 
 export class WinScreen extends Phaser.GameObjects.Container {
-    constructor(scene: Phaser.Scene, nextLevel?: number) {
+    constructor(scene: Phaser.Scene, grid: Grid, nextLevel?: number) {
         super(scene, GAME_WIDTH / 2, GAME_HEIGHT + 200);
 
         // Add a nine-patch image as the background
@@ -31,7 +33,11 @@ export class WinScreen extends Phaser.GameObjects.Container {
                 color: "#0000FF"
             }).setInteractive();
             nextLevelButton.setOrigin(0.5, 0.5);
-            nextLevelButton.on('pointerdown', () => {
+            nextLevelButton.on('pointerdown', async () => {
+                grid.fadeOutConnections();
+                this.fadeOut()
+                await grid.fadeOutItems();
+                await grid.fadeOutGrid();
                 scene.scene.restart({level: nextLevel});
             });
             this.add(nextLevelButton);
@@ -55,8 +61,16 @@ export class WinScreen extends Phaser.GameObjects.Container {
         scene.add.existing(this);
     }
 
+    fadeOut() {
+        this.scene.tweens.add({
+            targets: this,
+            y: GAME_HEIGHT + 200,
+            duration: 400,
+            ease: Phaser.Math.Easing.Back.InOut
+        });
+    }
+
     fadeIn() {
-        // Animate the win screen to blend in from below
         this.scene.tweens.add({
             targets: this,
             y: GAME_HEIGHT - 200,
