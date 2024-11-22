@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import {GameColors, Item} from "../interfaces/Item";
-import {mod, Vec2, vec2Equals, vec2Mean} from "../Helpers/VecMath";
+import {Vec2, vec2Equals} from "../Helpers/VecMath";
+import {DEPTHS} from "../Helpers/Depths";
 import Graphics = Phaser.GameObjects.Graphics;
 import QuadraticBezier = Phaser.Curves.QuadraticBezier;
 import Line = Phaser.Curves.Line;
@@ -8,7 +9,7 @@ import Vector2 = Phaser.Math.Vector2;
 import Path = Phaser.Curves.Path;
 import Image = Phaser.GameObjects.Image;
 import Container = Phaser.GameObjects.Container;
-import {DEPTHS} from "../Helpers/Depths";
+import {GridSize} from "./Grid";
 
 export enum PowerInfo {
     NO_INFO,
@@ -47,23 +48,20 @@ export class Connection extends Container {
     private pathGraphics: Graphics
 
     private showingElectrons: boolean = false
-    private t: number = 0
-    private lastElectronIndex: number = -1
-    private electronMoveTween?: Phaser.Tweens.Tween
+    private electronIndex: number = 0
+    private maxElectronScale: number
+    private subStepsPerNode: number = 4;
+    private lastElectronRoundStart: number = 0
     private electronImage: Image
-    private electronMsPerNode: number = 80;
+    private electronMsPerNode: number = 100;
     private minWaitingTimeForNextElectron = 1000;
-    private lastElectronChange: number
-    private lastRoundStart: number;
     private lineSize: number
     private connectorPointSize: number
     private electronTimerEvent?: Phaser.Time.TimerEvent;
 
-    constructor(scene: Phaser.Scene, gridUnitSize: number) {
+    constructor(scene: Phaser.Scene, gridSize: GridSize) {
         super(scene)
         scene.add.existing(this)
-        this.lastElectronChange = scene.time.now
-        this.lastRoundStart = scene.time.now
         this.pathGraphics = scene.add.graphics()
         this.pathGraphics.setDepth(DEPTHS.CONNECTIONS)
         this.onGraph = scene.add.image(0, 0, "").setOrigin(0, 0)
@@ -73,8 +71,10 @@ export class Connection extends Container {
         this.offGraph.setVisible(false)
         this.offGraph.setDepth(DEPTHS.CONNECTIONS)
 
-        this.lineSize = gridUnitSize * LINE_SIZE
-        this.connectorPointSize = gridUnitSize * CONNECTOR_INSIDE_POINT_SIZE
+        let unitSize = gridSize.unitSize
+        this.lineSize = unitSize * LINE_SIZE
+        this.connectorPointSize = unitSize * CONNECTOR_INSIDE_POINT_SIZE
+        this.maxElectronScale = gridSize.relativeScale
 
         this.electronImage = scene.add.image(0, 0, "electron")
         this.electronImage.setScale(0)
@@ -86,8 +86,8 @@ export class Connection extends Container {
 
     private createElectronTimer() {
         this.electronTimerEvent = this.scene.time.addEvent({
-            delay: this.electronMsPerNode,
-            callback: this.updateElectronPosition,
+            delay: this.electronMsPerNode / this.subStepsPerNode,
+            callback: () => {this.updateElectronPosition()},
             callbackScope: this,
             loop: true
         });
@@ -136,7 +136,7 @@ export class Connection extends Container {
         if (!this.isDirectedWithPower() || !this.end) {
             this.showingElectrons = false
             this.electronImage.setScale(0)
-            this.lastElectronIndex = -1
+            this.electronIndex = 0
         } else {
             this.showingElectrons = true
         }
@@ -216,39 +216,28 @@ export class Connection extends Container {
             return;
         }
 
-        this.electronImage.setScale(1)
-        this.t = (this.t +  0.1) % 1
-        let point = this.graphicsPath!.getPoint(this.t)
-        this.electronImage.setPosition(point.x, point.y)
+        let positionsPerPath = this.posPath.length * this.subStepsPerNode
 
-        // if (isAtEnd || wasUndefined) {
-        //     this.electronImage.setPosition(newPos.x, newPos.y)
-        // } else if (isAtOneBeforeEnd) {
-        //     this.electronMoveTween?.stop()
-        //     this.electronMoveTween = this.scene.tweens.add({
-        //         targets: this.electronImage,
-        //         scaleX: 0.05,
-        //         scaleY: 0.05,
-        //         alpha: 0.05,
-        //         x: newPos.x,
-        //         y: newPos.y,
-        //         duration: this.electronMsPerNode,
-        //         ease: Phaser.Math.Easing.Sine.In
-        //     })
-        // } else {
-        //     this.electronMoveTween?.stop()
-        //     this.electronMoveTween = this.scene.tweens.add({
-        //         targets: this.electronImage,
-        //         scaleX: 1,
-        //         scaleY: 1,
-        //         alpha: 1,
-        //         x: newPos.x,
-        //         y: newPos.y,
-        //         duration: this.electronMsPerNode,
-        //         ease: Phaser.Math.Easing.Linear
-        //     })
-        // }
+        if (this.electronIndex < positionsPerPath) {
+            this.electronIndex = this.electronIndex + 1
+        } else {
+            let now = this.scene.time.now
+            if (now > (this.lastElectronRoundStart + this.minWaitingTimeForNextElectron)) {
+                this.lastElectronRoundStart = now
+                this.electronIndex = 0
+            }
+        }
 
+        if (this.electronIndex <= positionsPerPath) {
+            let t = this.electronIndex / positionsPerPath
+            let point = this.graphicsPath!.getPoint(t)
+            let minOffset = 3
+            let stepsToEnd = Math.min(this.electronIndex, positionsPerPath - this.electronIndex)
+            let farEnoughtFromEnds = stepsToEnd > minOffset
+            this.electronImage.setScale(farEnoughtFromEnds ? this.maxElectronScale : (this.maxElectronScale * stepsToEnd / minOffset))
+            this.electronImage.setAlpha(farEnoughtFromEnds ? 1 : stepsToEnd / minOffset)
+            this.electronImage.setPosition(point.x, point.y)
+        }
     }
 
     getStartIndex() {
@@ -323,6 +312,7 @@ export class Connection extends Container {
     fixate() {
         if (!this.startIsSource) {
             this.posPath = this.posPath.reverse()
+            this.graphicsPath = this.calculateGraphicsPath()
             this.indexPath = this.indexPath.reverse()
             this.startIsSource = true
         }

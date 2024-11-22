@@ -1,12 +1,13 @@
 import Phaser from "phaser";
 import {Item, GameBaseColor} from "../../interfaces/Item";
 import {Connection} from "../Connection";
+import {GridSize} from "../Grid";
 
 // Links one source to multiple outputs
 export class Splitter extends Item {
 
-    constructor(scene: Phaser.Scene, gridUnitSize: number) {
-        super(scene, '', gridUnitSize);
+    constructor(scene: Phaser.Scene) {
+        super(scene, '');
         scene.add.existing(this)
     }
 

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import {Grid, GridSize} from '../gameobjects/Grid';
+import {Grid, GridSize, GridSizes} from '../gameobjects/Grid';
 import {LEVEL_DATA, LevelConfig} from '../levels/LevelConfig';
 import {GridInteractionHandler} from '../gameobjects/GridInteractionHandler';
 import {PowerForwarder} from '../gameobjects/PowerForwarder';
@@ -15,6 +15,7 @@ import {SwitchOut} from '../gameobjects/Items/SwitchOut';
 import {GAME_HEIGHT, GAME_WIDTH} from '../index';
 import {PowerInfo} from "../gameobjects/Connection";
 import {WinScreen} from "../gameobjects/WinScreen";
+import {Item} from "../interfaces/Item";
 
 const TEXT_STYLE = {
     fontFamily: "ItemFont",
@@ -44,9 +45,9 @@ export default class PlayScene extends Phaser.Scene {
         this.setupLevel(this.levelData!);
     }
 
-    private setupLevel(config: LevelConfig) {
+    private async setupLevel(config: LevelConfig) {
         this.createHeading(config.title ?? "Turn on all Lights");
-        this.createGrid(config.columns, config.rows, config.size ?? GridSize.S);
+        this.createGrid(config.columns, config.rows, config.size ?? GridSizes.M);
         this.createWinScreen()
         this.gridInteractionHandler = new GridInteractionHandler(
             this,
@@ -54,38 +55,45 @@ export default class PlayScene extends Phaser.Scene {
             () => this.checkSources()
         );
         this.powerForwarder = new PowerForwarder(this.grid!);
-        config.items.forEach((item: any) => {
-            const {type, position} = item;
+        config.items.forEach((configItem: any) => {
+            const {type, position} = configItem;
+            let item: Item
             switch (type) {
                 case 'Power':
-                    this.grid!.addItemAtIndex(position, new Power(this, this.grid!.getUnitSize()));
+                    item = new Power(this);
                     break;
                 case 'Light':
-                    this.grid!.addItemAtIndex(position, new Light(this, this.grid!.getUnitSize()));
+                    item = new Light(this);
                     break;
                 case 'Stopper':
-                    this.grid!.addItemAtIndex(position, new Stopper(this, false, this.grid!.getUnitSize()));
+                    item = new Stopper(this, false);
                     break;
                 case 'Or':
-                    this.grid!.addItemAtIndex(position, new Or(this, this.grid!.getUnitSize()));
+                    item = new Or(this);
                     break;
                 case 'And':
-                    this.grid!.addItemAtIndex(position, new And(this, this.grid!.getUnitSize()));
+                    item = new And(this);
                     break;
                 case 'Not':
-                    this.grid!.addItemAtIndex(position, new Not(this, this.grid!.getUnitSize()));
+                    item = new Not(this);
                     break;
                 case 'Splitter':
-                    this.grid!.addItemAtIndex(position, new Splitter(this, this.grid!.getUnitSize()));
+                    item =  new Splitter(this);
                     break;
                 case 'SwitchIn':
-                    this.grid!.addItemAtIndex(position, new SwitchIn(this, false, this.grid!.getUnitSize()));
+                    item = new SwitchIn(this, false);
                     break;
                 case 'SwitchOut':
-                    this.grid!.addItemAtIndex(position, new SwitchOut(this, false, this.grid!.getUnitSize()));
+                    item = new SwitchOut(this, false);
                     break;
             }
+            item!.setAlpha(0)
+            item!.setGridSize(this.grid!.getGridSize());
+            this.grid!.addItemAtIndex(position, item!);
         });
+
+        await this.grid!.fadeInGrid();
+        this.grid!.fadeInItems();
     }
 
     private createHeading(heading: string) {
@@ -101,7 +109,6 @@ export default class PlayScene extends Phaser.Scene {
             columns, rows,
             size
         );
-        this.grid.showGrid();
     }
 
     private checkSources() {
@@ -122,8 +129,10 @@ export default class PlayScene extends Phaser.Scene {
     }
 
     private showWinScreen() {
-        this.isShowingWinScreen = true;
-        this.winScreen!.fadeIn();
+        if (!this.isShowingWinScreen) {
+            this.isShowingWinScreen = true;
+            this.winScreen!.fadeIn();
+        }
     }
 
     private createWinScreen() {

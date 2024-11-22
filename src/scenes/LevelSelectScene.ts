@@ -2,9 +2,12 @@ import Phaser from 'phaser';
 import {GAME_HEIGHT, GAME_WIDTH} from "../index";
 import {LEVEL_DATA} from "../levels/LevelConfig";
 import {TextButton} from "../gameobjects/TextButton";
+import {TweenTimeline} from "../Helpers/TweenTimeline";
 import Text = Phaser.GameObjects.Text;
 
 export default class LevelSelectScene extends Phaser.Scene {
+    private fadeOutTimeline?: TweenTimeline;
+    private fadeInTimeline?: TweenTimeline;
     private title?: Text;
     private buttons?: TextButton[];
 
@@ -24,60 +27,74 @@ export default class LevelSelectScene extends Phaser.Scene {
             this.buttons.push(this.createLevelButton(i + 1, GAME_HEIGHT));
         }
 
-        this.fadeIn(this.title, this.buttons);
+        this.fadeIn();
     }
 
     createLevelButton(level: number, y: number) {
-        const button = new TextButton(this, GAME_WIDTH / 2, y, 250, 100, `Level ${level}`, () => {
-            this.fadeOut(this.title!, this.buttons!, () => {
-                this.scene.start('PlayScene', {level});
+        const button = new TextButton(this,
+            GAME_WIDTH / 2, y, 250, 100, `Level ${level}`,
+            () => {
+                this.fadeOutAndStart('PlayScene', {level});
             });
-        });
         button.setAlpha(0)
         return button;
     }
 
-    private fadeIn(title: Phaser.GameObjects.Text, buttons: TextButton[]) {
-        this.tweens.add({
-            targets: title,
-            y: 100,
-            duration: 1000,
-            ease: 'Power2'
-        });
-
-        buttons.forEach((button, index) => {
-            this.tweens.add({
-                targets: button,
-                y: 250 + index * 130,
-                alpha: 1,
-                duration: 500,
-                ease: 'Power2',
-                delay: 200 + index * 100
-            });
+    private fadeIn() {
+        this.fadeInTimeline?.destroy()
+        this.fadeInTimeline = new TweenTimeline({
+            scene: this,
+            tweens: [
+                {
+                    at: 0,
+                    targets: this.title,
+                    y: 100,
+                    duration: 500,
+                    ease: 'Power2'
+                },
+                ...this.buttons!.map((button, index) => {
+                    return {
+                        at: 200 + index * 100,
+                        targets: button,
+                        y: 250 + index * 130,
+                        alpha: 1,
+                        duration: 500,
+                        ease: 'Power2'
+                    };
+                })
+            ]
         });
     }
 
-    private fadeOut(title: Phaser.GameObjects.Text, buttons: TextButton[], callback: () => void) {
-        buttons.slice()
-            .reverse()
-            .forEach((button, index) => {
-                this.tweens.add({
-                    targets: button,
-                    y: GAME_HEIGHT,
-                    alpha: 0,
+    private fadeOutAndStart(sceneName: string, levelData: { level: number }) {
+        this.fadeInTimeline?.destroy()
+        this.fadeOutTimeline?.destroy()
+        this.fadeOutTimeline = new TweenTimeline({
+            scene: this,
+            tweens: [
+                ...this.buttons!.slice()
+                    .reverse()
+                    .map((button, index) => {
+                        return {
+                            at: index * 100,
+                            targets: button,
+                            y: GAME_HEIGHT,
+                            alpha: 0,
+                            duration: 500,
+                            ease: Phaser.Math.Easing.Quadratic.InOut
+                        };
+                    }),
+                {
+                    at: 0,
+                    targets: this.title,
+                    y: -100,
                     duration: 500,
-                    ease: Phaser.Math.Easing.Quadratic.InOut,
-                    delay: index * 100
-                });
-            });
-
-        this.tweens.add({
-            targets: title,
-            y: -100,
-            duration: 1000,
-            ease: Phaser.Math.Easing.Quadratic.InOut,
-            delay: buttons.length * 100,
-            onComplete: callback
-        });
+                    ease: Phaser.Math.Easing.Quadratic.InOut
+                }
+            ],
+            onComplete: () => {
+                this.scene.start(sceneName, levelData)
+            }
+        })
     }
 }

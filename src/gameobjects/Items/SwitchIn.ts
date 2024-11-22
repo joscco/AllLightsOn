@@ -2,14 +2,15 @@ import Phaser from "phaser";
 import {GameBaseColor, Item} from "../../interfaces/Item";
 import {Connection, PowerInfo} from "../Connection";
 import {vec2Equals} from "../../Helpers/VecMath";
+import {GridSize} from "../Grid";
 
 // Allows switching between multiple inputs
 export class SwitchIn extends Item {
     private useUpper: boolean = false;
     private isAbleToForward: boolean = false
 
-    constructor(scene: Phaser.Scene, upper: boolean, gridUnitSize: number) {
-        super(scene, 'switch_up_off', gridUnitSize);
+    constructor(scene: Phaser.Scene, upper: boolean) {
+        super(scene, 'switch_up_off');
         this.setUseUpper(upper)
         scene.add.existing(this)
         this.setAbleToForward(false)

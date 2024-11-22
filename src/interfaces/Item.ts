@@ -5,6 +5,7 @@ import {Scene} from "phaser";
 import {Connection, PowerInfo} from "../gameobjects/Connection";
 import {Vec2} from "../Helpers/VecMath";
 import {DEPTHS} from "../Helpers/Depths";
+import {GridSize} from "../gameobjects/Grid";
 
 export enum GameBaseColor {
     ORANGE,
@@ -42,21 +43,24 @@ export abstract class Item extends Container {
     protected index?: Vec2
     protected incomingConnectorIndices: Vec2[] = []
     protected outgoingConnectorIndices: Vec2[] = []
-    protected gridUnitSize: number
+    protected gridSize?: GridSize
     private wiggleTween?: TweenChain
 
-    constructor(scene: Scene, texture: string | null, gridUnitSize: number) {
+    constructor(scene: Scene, texture: string | null) {
         super(scene, 0, 0);
         // Slight offset to top because of the bottom border
         this.base = scene.add.image(0, 0, this.getBaseTexture(this.getRowHeight(), this.getColWidth()))
         this.add(this.base)
-        this.gridUnitSize = gridUnitSize
 
         if (texture) {
             this.sprite = scene.add.image(0, -22, texture)
             this.add(this.sprite)
         }
         this.setDepth(DEPTHS.ITEMS)
+    }
+
+    setGridSize(gridSize: GridSize) {
+        this.gridSize = gridSize
     }
 
     setIndex(leftBottomIndex: Vec2) {

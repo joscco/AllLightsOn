@@ -1,14 +1,15 @@
 import Phaser from "phaser";
 import {GameBaseColor, Item} from "../../interfaces/Item";
 import {Connection, PowerInfo} from "../Connection";
+import {GridSize} from "../Grid";
 
 // Allows stopping power flow
 export class Stopper extends Item {
 
     private _isOn: boolean = false;
 
-    constructor(scene: Phaser.Scene, on: boolean, gridUnitSize: number) {
-        super(scene, 'stopper_on', gridUnitSize);
+    constructor(scene: Phaser.Scene, on: boolean) {
+        super(scene, 'stopper_on');
         this.sprite?.setPosition(0, -33)
         this.setOn(on)
         scene.add.existing(this)

@@ -2,6 +2,7 @@ import Graphics = Phaser.GameObjects.Graphics;
 import Layer = Phaser.GameObjects.Layer;
 import Clamp = Phaser.Math.Clamp;
 import Container = Phaser.GameObjects.Container;
+import Image = Phaser.GameObjects.Image;
 import {Scene} from "phaser"
 import {Vector2Dict, Vector2PairDict,} from "../Helpers/Dict"
 import {GameColors, Item} from "../interfaces/Item"
@@ -10,9 +11,19 @@ import {Connection} from "./Connection"
 import {AStarGrid} from "../AStar/AStarFinder";
 import {GAME_HEIGHT, GAME_WIDTH} from "../index";
 import {DEPTHS} from "../Helpers/Depths";
+import {TweenTimeline} from "../Helpers/TweenTimeline";
 
-export enum GridSize {
-    XS, S, M, L
+export type GridSize = {
+    unitSize: number,
+    relativeScale: number
+}
+
+export const GridSizes = {
+    XS: {unitSize: 80, relativeScale: 0.4},
+    S: {unitSize: 100, relativeScale: 0.5},
+    M: {unitSize: 120, relativeScale: 0.6},
+    L: {unitSize: 160, relativeScale: 0.8},
+    XL: {unitSize: 200, relativeScale: 1},
 }
 
 export interface ConnectorInUsed {
@@ -44,6 +55,7 @@ export class Grid implements AStarGrid {
     private gridPointGraphics: Graphics
     private gridPointLayer: Layer
     private gridImage?: Phaser.GameObjects.Image;
+    private points?: Image[] = []
 
     // Depth 1
     private items: Item[] = []
@@ -64,15 +76,15 @@ export class Grid implements AStarGrid {
         this.scene = scene
         this.x = centerX
         this.y = centerY
-        this.colWidth = Grid.getUnitSize(gridSize)
-        this.rowWidth = Grid.getUnitSize(gridSize)
+        this.gridSize = gridSize
+        this.colWidth = gridSize.unitSize
+        this.rowWidth = gridSize.unitSize
         this.columns = width
         this.rows = height
         this.minColIndex = -Math.floor(this.columns / 2)
         this.maxColIndex = Math.floor(this.columns / 2)
         this.minRowIndex = -Math.floor(this.rows / 2)
         this.maxRowIndex = Math.floor(this.rows / 2)
-        this.gridSize = gridSize
         this.evenColsOffset = (this.columns % 2 == 0) ? this.colWidth / 2 : 0
         this.evenRowsOffset = (this.rows % 2 == 0) ? this.rowWidth / 2 : 0
 
@@ -95,25 +107,8 @@ export class Grid implements AStarGrid {
         this.itemLayer.setDepth(DEPTHS.ITEMS)
     }
 
-    private static getUnitSize(gridSize: GridSize) {
-        switch (gridSize) {
-            case GridSize.XS:
-                return 58
-            case GridSize.S:
-                return 78
-            case GridSize.M:
-                return 98
-            case GridSize.L:
-                return 110
-        }
-    }
-
-    public getUnitSize() {
-        return Grid.getUnitSize(this.gridSize)
-    }
-
-    private static getItemScale(gridSize: GridSize) {
-        return this.getUnitSize(gridSize) / 200
+    getGridSize() {
+        return this.gridSize
     }
 
     isFreeAt(v: Vec2, comingFrom: Vec2): boolean {
@@ -226,7 +221,7 @@ export class Grid implements AStarGrid {
         item.setPosition(center.x, center.y)
         item.setIndex(bottomLeftIndex)
         item.setDepth(bottomLeftIndex.y)
-        item.setScale(Grid.getItemScale(this.gridSize))
+        item.setScale(this.gridSize.relativeScale)
 
         // Set connectors
         let leftBottomIndex = {x: bottomLeftIndex.x, y: bottomLeftIndex.y}
@@ -236,7 +231,7 @@ export class Grid implements AStarGrid {
             let offsetPosition = this.getPositionForIndex(offsetIndex)
             this.inConnectorMap.set(offsetIndex, {item: item, used: false, isInput: true})
             let connector = this.scene.add.image(offsetPosition.x + 0.53 * this.colWidth, offsetPosition.y, 'connector_plus')
-            connector.setScale(Grid.getItemScale(this.gridSize))
+            connector.setScale(this.gridSize.relativeScale)
             this.connectorImages.add(connector)
         }
 
@@ -247,7 +242,7 @@ export class Grid implements AStarGrid {
             let offsetPosition = this.getPositionForIndex(offsetIndex)
             this.outConnectorMap.set(offsetIndex, {item: item, used: false, isInput: false})
             let connector = this.scene.add.image(offsetPosition.x - 0.53 * this.colWidth, offsetPosition.y, 'connector_minus')
-            connector.setScale(Grid.getItemScale(this.gridSize))
+            connector.setScale(this.gridSize.relativeScale);
             this.connectorImages.add(connector)
         }
     }
@@ -266,21 +261,98 @@ export class Grid implements AStarGrid {
         }
     }
 
-    showGrid() {
+    fadeInItems() {
+        let fadeInTimeline = new TweenTimeline({
+            scene: this.scene,
+            tweens: this.items.map(item => {
+                return {
+                    at: 0,
+                    targets: item,
+                    alpha: 1,
+                    duration: 200
+                }
+            })
+        })
+    }
+
+    async fadeInGrid() {
         this.gridPointGraphics.clear();
+        this.points?.forEach(point => point.destroy());
+        this.points = []
+        let gridPointRadius = GRID_POINT_SIZE * this.gridSize.unitSize;
+        this.gridPointGraphics.fillCircle(gridPointRadius, gridPointRadius, gridPointRadius);
+        this.scene.textures.remove("singleGridPointTexture");
+        this.gridPointGraphics.generateTexture('singleGridPointTexture', 2 * gridPointRadius, 2 * gridPointRadius);
+        this.gridPointGraphics.clear();
+
         for (let x = this.minColIndex; x <= this.maxColIndex; x++) {
             for (let y = this.minRowIndex; y <= this.maxRowIndex; y++) {
-                const index = { x, y };
+                const index = {x, y};
                 const pos = this.getPositionForIndex(index);
                 if (!this.itemMap.has(index)) {
-                    this.gridPointGraphics.fillCircle(pos.x, pos.y, GRID_POINT_SIZE * Grid.getUnitSize(this.gridSize));
+                    const point = this.scene.add.image(pos.x, pos.y, 'singleGridPointTexture')
+                        .setScale(0)
+                        .setAlpha(0);
+                    this.points.push(point);
                 }
             }
         }
-        this.scene.textures.remove("gridPointTexture");
-        this.gridPointGraphics.generateTexture('gridPointTexture', GAME_WIDTH, GAME_HEIGHT);
-        this.gridPointGraphics.clear()
-        this.gridImage = this.scene.add.image(0, 0, 'gridPointTexture').setOrigin(0, 0)
+
+        let leftTopPosition = this.getPositionForIndex({x: this.minColIndex, y: this.minRowIndex});
+        await new TweenTimeline({
+            scene: this.scene,
+            tweens: this.points!.map(point => {
+                return {
+                    at: (point.x - leftTopPosition.x) + (point.y - leftTopPosition.y),
+                    targets: point,
+                    scale: 1,
+                    alpha: 1,
+                    duration: 200
+                }
+            }),
+            onComplete: () => {
+                this.replacePointsWithImage();
+            }
+        }).asPromise()
+    }
+
+    fadeOutGrid() {
+        const points = this.gridPointLayer.getAll() as Phaser.GameObjects.Image[];
+
+        points.forEach((point, i) => {
+            this.scene.tweens.add({
+                targets: point,
+                scale: 0,
+                alpha: 0,
+                duration: 300,
+                delay: i * 50,
+                onComplete: () => {
+                    if (i === points.length - 1) {
+                        this.gridPointGraphics.clear();
+                        this.gridImage?.destroy();
+                    }
+                }
+            });
+        });
+    }
+
+    private replacePointsWithImage() {
+        this.gridPointGraphics.clear();
+        for (let x = this.minColIndex; x <= this.maxColIndex; x++) {
+            for (let y = this.minRowIndex; y <= this.maxRowIndex; y++) {
+                const index = {x, y};
+                const pos = this.getPositionForIndex(index);
+                if (!this.itemMap.has(index)) {
+                    this.gridPointGraphics.fillCircle(pos.x, pos.y, GRID_POINT_SIZE * this.gridSize.unitSize);
+                }
+            }
+        }
+
+        this.scene.textures.remove("gridPointsTexture");
+        this.gridPointGraphics.generateTexture('gridPointsTexture', GAME_WIDTH, GAME_HEIGHT);
+        this.gridPointGraphics.clear();
+        this.gridImage = this.scene.add.image(0, 0, 'gridPointsTexture').setOrigin(0, 0);
+        this.points?.forEach(point => point.destroy());
     }
 
     getItemAtIndex(index: Vec2): Item | undefined {

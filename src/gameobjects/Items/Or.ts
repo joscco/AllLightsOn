@@ -2,13 +2,14 @@ import Phaser from "phaser";
 import {Item, GameBaseColor, TEXT_COLOR_WHEN_ON, TEXT_COLOR_WHEN_OFF} from "../../interfaces/Item";
 import {Connection} from "../Connection";
 import Text = Phaser.GameObjects.Text;
+import {GridSize} from "../Grid";
 
 // Forwards power if any of the sources is on
 export class Or extends Item {
     private text: Text
 
-    constructor(scene: Phaser.Scene, gridUnitSize: number) {
-        super(scene, '', gridUnitSize);
+    constructor(scene: Phaser.Scene) {
+        super(scene, '');
         scene.add.existing(this)
         this.text = scene.add.text(-6, -22, 'OR', {
             fontFamily: "ItemFont",

@@ -1,90 +1,113 @@
 import Phaser from 'phaser';
 import {GAME_HEIGHT, GAME_WIDTH, ITEM_FONT} from "../index";
 import {TextButton} from "../gameobjects/TextButton";
+import {TweenTimeline} from "../Helpers/TweenTimeline";
 
 export default class TitleScene extends Phaser.Scene {
+
+    private fadeInTimeline?: TweenTimeline
+    private fadeOutTimeline?: TweenTimeline
+
+    private title?: Phaser.GameObjects.Text;
+    private startButton?: TextButton;
+    private optionsButton?: TextButton;
+
     constructor() {
         super({key: 'TitleScene'});
     }
 
     create() {
-        const title = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT + 100, 'All Lights On', {
+        this.title = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT + 100, 'All Lights On', {
             fontFamily: ITEM_FONT,
             fontSize: '100px',
             color: '#fff'
         }).setOrigin(0.5);
 
-        const startButton = new TextButton(this,
+        this.startButton = new TextButton(this,
             GAME_WIDTH / 2, GAME_HEIGHT + 200,
             400, 100,
             'Start Game',
             () => {
-                this.fadeOut(title, startButton, optionsButton, () => {
-                    this.scene.start('LevelSelectScene');
-                })
+                this.fadeOutAndStart('LevelSelectScene');
             });
 
-        const optionsButton = new TextButton(this,
+        this.optionsButton = new TextButton(this,
             GAME_WIDTH / 2, GAME_HEIGHT + 300,
             250, 100,
             'Options',
             () => {
-                this.scene.start('OptionsScene');
+                this.fadeOutAndStart('OptionsScene');
             }
         );
 
-        this.fadeIn(title, startButton, optionsButton);
+        this.fadeIn();
     }
 
-    private fadeIn(title: Phaser.GameObjects.Text, startButton: TextButton, optionsButton: TextButton) {
-        this.tweens.add({
-            targets: title,
-            y: 300,
-            duration: 1000,
-            ease: 'Power2'
-        });
+    private fadeIn() {
+        this.fadeInTimeline?.destroy()
+        this.fadeInTimeline = new TweenTimeline({
+            scene: this,
+            tweens: [
+                {
+                    at: 0,
+                    targets: this.title,
+                    y: 300,
+                    duration: 500,
+                    ease: 'Power2'
 
-        this.tweens.add({
-            targets: startButton,
-            y: GAME_HEIGHT / 2,
-            duration: 500,
-            ease: 'Power2',
-            delay: 200
-        });
+                },
+                {
+                    at: 200,
+                    targets: this.startButton,
+                    y: GAME_HEIGHT / 2,
+                    duration: 500,
+                    ease: 'Power2',
 
-        this.tweens.add({
-            targets: optionsButton,
-            y: 700,
-            duration: 500,
-            ease: 'Power2',
-            delay: 400
-        });
+                },
+                {
+                    at: 400,
+                    targets: this.optionsButton,
+                    y: 700,
+                    duration: 500,
+                    ease: 'Power2',
+                }
+            ]
+        })
     }
 
-    private fadeOut(title: Phaser.GameObjects.Text, startButton: TextButton, optionsButton: TextButton, callback: () => void) {
-        this.tweens.add({
-            targets: optionsButton,
-            y: GAME_HEIGHT + 300,
-            duration: 1000,
-            ease: Phaser.Math.Easing.Quadratic.InOut,
+    private fadeOutAndStart(sceneName: string) {
+        this.fadeInTimeline?.destroy()
+        this.fadeOutTimeline?.destroy()
+        this.fadeOutTimeline = new TweenTimeline({
+            scene: this,
+            tweens: [
+                {
+                    at: 0,
+                    targets: this.optionsButton,
+                    y: GAME_HEIGHT + 300,
+                    duration: 300,
+                    ease: Phaser.Math.Easing.Quadratic.InOut,
 
-        });
+                },
+                {
+                    at: 100,
+                    targets: this.startButton,
+                    y: GAME_HEIGHT + 200,
+                    duration: 300,
+                    ease: Phaser.Math.Easing.Quadratic.InOut,
 
-        this.tweens.add({
-            targets: startButton,
-            y: GAME_HEIGHT + 200,
-            duration: 500,
-            ease: Phaser.Math.Easing.Quadratic.InOut,
-            delay: 200
-        });
-
-        this.tweens.add({
-            targets: title,
-            y: GAME_HEIGHT + 100,
-            duration: 500,
-            ease: Phaser.Math.Easing.Quadratic.InOut,
-            delay: 400,
-            onComplete: callback
-        });
+                },
+                {
+                    at: 200,
+                    targets: this.title,
+                    y: GAME_HEIGHT + 100,
+                    duration: 300,
+                    ease: Phaser.Math.Easing.Quadratic.InOut,
+                }
+            ],
+            onComplete: () => {
+                this.scene.start(sceneName)
+            }
+        })
     }
 }

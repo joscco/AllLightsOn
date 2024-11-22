@@ -43,7 +43,7 @@ export class GridInteractionHandler {
         let index = this.grid!.getIndexForPosition(pointer);
         let item = this.grid!.getItemAtIndex(index) ?? this.grid!.getConnectorAtIndex(index)?.item;
         if (item) {
-            this.currentConnection = new Connection(this.scene, this.grid!.getUnitSize());
+            this.currentConnection = new Connection(this.scene, this.grid!.getGridSize());
             this.grid!.addConnectionToLayer(this.currentConnection);
             this.currentConnection.setStart(item);
             this.indexPath = [this.grid!.getIndexForPosition(pointer)];

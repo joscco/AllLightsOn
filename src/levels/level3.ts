@@ -1,7 +1,9 @@
 import {LevelConfig} from "./LevelConfig";
+import {GridSizes} from "../gameobjects/Grid";
 
 export const LEVEL_3: LevelConfig = {
     "title": "Level 3",
+    size: GridSizes.S,
     rows: 3,
     columns: 13,
     "items": [
