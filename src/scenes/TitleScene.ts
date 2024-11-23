@@ -11,6 +11,7 @@ export default class TitleScene extends Phaser.Scene {
     private title?: Phaser.GameObjects.Text;
     private startButton?: TextButton;
     private optionsButton?: TextButton;
+    private levelEditorButton?: TextButton;
 
     constructor() {
         super({key: 'TitleScene'});
@@ -37,6 +38,15 @@ export default class TitleScene extends Phaser.Scene {
             'Options',
             () => {
                 this.fadeOutAndStart('OptionsScene');
+            }
+        );
+
+        this.levelEditorButton = new TextButton(this,
+            GAME_WIDTH / 2, GAME_HEIGHT + 400,
+            250, 100,
+            'Level Editor',
+            () => {
+                this.fadeOutAndStart('LevelEditorScene');
             }
         );
 
@@ -70,6 +80,13 @@ export default class TitleScene extends Phaser.Scene {
                     y: 700,
                     duration: 500,
                     ease: 'Power2',
+                },
+                {
+                    at: 600,
+                    targets: this.levelEditorButton,
+                    y: 800,
+                    duration: 500,
+                    ease: 'Power2',
                 }
             ]
         })
@@ -101,6 +118,13 @@ export default class TitleScene extends Phaser.Scene {
                     at: 200,
                     targets: this.title,
                     y: GAME_HEIGHT + 100,
+                    duration: 300,
+                    ease: Phaser.Math.Easing.Quadratic.InOut,
+                },
+                {
+                    at: 300,
+                    targets: this.levelEditorButton,
+                    y: GAME_HEIGHT + 400,
                     duration: 300,
                     ease: Phaser.Math.Easing.Quadratic.InOut,
                 }

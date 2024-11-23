@@ -71,7 +71,6 @@ export abstract class Item extends Container {
             this.add(this.sprite)
         }
         this.setDepth(DEPTHS.ITEMS)
-        this.setScale(0)
     }
 
     setGridSize(gridSize: GridSize) {

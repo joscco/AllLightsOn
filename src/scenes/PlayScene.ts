@@ -87,6 +87,7 @@ export default class PlayScene extends Phaser.Scene {
                     item = new SwitchOut(this, false);
                     break;
             }
+            item!.setScale(0)
             item!.setGridSize(this.grid!.getGridSize());
             this.grid!.addItemAtIndex(position, item!);
         });

@@ -6,6 +6,7 @@ import Preloader from "./scenes/Preloader";
 import LevelSelectScene from "./scenes/LevelSelectScene";
 import GameConfig = Phaser.Types.Core.GameConfig;
 import RexUIPlugin from "phaser3-rex-plugins/templates/ui/ui-plugin.js";
+import {LevelEditorScene} from "./scenes/LevelEditorScene";
 export const GAME_WIDTH = 1920;
 export const GAME_HEIGHT = 1080;
 export const ITEM_FONT = 'ItemFont';
@@ -32,6 +33,6 @@ export const GAME_CONFIG: GameConfig = {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH
     },
-    scene: [Preloader, TitleScene, OptionsScene, LevelSelectScene, PlayScene]
+    scene: [Preloader, TitleScene, OptionsScene, LevelSelectScene, PlayScene, LevelEditorScene]
 };
 new Phaser.Game(GAME_CONFIG)
