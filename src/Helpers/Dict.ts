@@ -1,4 +1,4 @@
-import { Vec2 } from "./VecMath";
+import {Vec2, vec2Equals} from "./VecMath";
 
 export class Dict<K, V> {
     private map = new Map<string, [K, V]>();
@@ -85,5 +85,9 @@ export class Vector2PairDict<V> extends Dict<[Vec2, Vec2], V> {
                 : (v.x < w.x ? [v, w] : [w, v]);
             return `${min.x},${min.y},${max.x},${max.y}`;
         }, entries);
+    }
+
+    hasAnyWithKey(index: Vec2) {
+        return this.getEntriesWith(([v, w]) => vec2Equals(v, index) || vec2Equals(w, index)).length > 0;
     }
 }

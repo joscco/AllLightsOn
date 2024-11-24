@@ -1,6 +1,6 @@
 import {Connection, PowerInfo} from "./Connection";
 import {Item} from "../interfaces/Item";
-import {Grid} from "./Grid";
+import {Grid} from "./GridStuff/Grid";
 
 export class PowerForwarder {
     private grid: Grid;

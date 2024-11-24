@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
-import {Grid, GridSize, GridSizes} from '../gameobjects/Grid';
+import {Grid} from '../gameobjects/GridStuff/Grid';
 import {LevelConfig} from '../levels/LevelConfig';
-import {GridInteractionHandler} from '../gameobjects/GridInteractionHandler';
+import {GridInteractionHandler} from '../gameobjects/GridStuff/GridInteractionHandler';
 import {Power} from '../gameobjects/Items/Power';
 import {Light} from '../gameobjects/Items/Light';
 import {Stopper} from '../gameobjects/Items/Stopper';
@@ -15,6 +15,8 @@ import {GAME_HEIGHT, GAME_WIDTH} from '../index';
 import {PowerForwarder} from "../gameobjects/PowerForwarder";
 import {PowerInfo} from "../gameobjects/Connection";
 import {Vec2} from "../Helpers/VecMath";
+import {GridSize, GridSizes} from "../gameobjects/GridStuff/GridConsts";
+import {Item} from "../interfaces/Item";
 
 const TEXT_STYLE = {
     fontFamily: "ItemFont",
@@ -43,7 +45,7 @@ export class LevelEditorScene extends Phaser.Scene {
     private decreaseSizeButton?: Phaser.GameObjects.Image;
 
     constructor(key: string = 'LevelEditorScene') {
-        super({ key: key });
+        super({key: key});
     }
 
     preload() {
@@ -77,26 +79,26 @@ export class LevelEditorScene extends Phaser.Scene {
             columns, rows,
             size
         );
-        this.grid.fadeInGrid();
         this.gridInteractionHandler = new GridInteractionHandler(
             this,
             this.grid,
             () => this.checkSources()
         );
+        this.grid.fadeInGrid();
     }
 
     private createToolMenu() {
         const toolMenu = this.add.container(0, GAME_HEIGHT - 100);
         const items = [
-            { type: 'Power', texture: 'powerTexture' },
-            { type: 'Light', texture: 'lightTexture' },
-            { type: 'Stopper', texture: 'stopperTexture' },
-            { type: 'And', texture: 'andTexture' },
-            { type: 'Or', texture: 'orTexture' },
-            { type: 'Not', texture: 'notTexture' },
-            { type: 'Splitter', texture: 'splitterTexture' },
-            { type: 'SwitchIn', texture: 'switchInTexture' },
-            { type: 'SwitchOut', texture: 'switchOutTexture' }
+            {type: 'Power', texture: 'powerTexture'},
+            {type: 'Light', texture: 'lightTexture'},
+            {type: 'Stopper', texture: 'stopperTexture'},
+            {type: 'And', texture: 'andTexture'},
+            {type: 'Or', texture: 'orTexture'},
+            {type: 'Not', texture: 'notTexture'},
+            {type: 'Splitter', texture: 'splitterTexture'},
+            {type: 'SwitchIn', texture: 'switchInTexture'},
+            {type: 'SwitchOut', texture: 'switchOutTexture'}
         ];
 
         items.forEach((item, index) => {
@@ -144,7 +146,7 @@ export class LevelEditorScene extends Phaser.Scene {
         this.levelData.rows = rows;
         this.levelData.size = size;
         this.grid!.updateGridDimensions(columns, rows, size);
-        this.grid!.showGrid();
+        this.checkSources()
         this.updateButtonStates();
     }
 
@@ -204,36 +206,39 @@ export class LevelEditorScene extends Phaser.Scene {
     }
 
     private addItemToGrid(itemType: string, index: { x: number, y: number }) {
+        let item: Item
         switch (itemType) {
             case 'Power':
-                this.grid!.addItemAtIndex(index, new Power(this).setScale(this.grid?.getGridSize().relativeScale));
+                item = new Power(this)
                 break;
             case 'Light':
-                this.grid!.addItemAtIndex(index, new Light(this).setScale(this.grid?.getGridSize().relativeScale));
+                item = new Light(this)
                 break;
             case 'Stopper':
-                this.grid!.addItemAtIndex(index, new Stopper(this, false).setScale(this.grid?.getGridSize().relativeScale));
+                item = new Stopper(this, false)
                 break;
             case 'Or':
-                this.grid!.addItemAtIndex(index, new Or(this).setScale(this.grid?.getGridSize().relativeScale));
+                item =  new Or(this)
                 break;
             case 'And':
-                this.grid!.addItemAtIndex(index, new And(this).setScale(this.grid?.getGridSize().relativeScale));
+                item = new And(this)
                 break;
             case 'Not':
-                this.grid!.addItemAtIndex(index, new Not(this).setScale(this.grid?.getGridSize().relativeScale));
+                item = new Not(this)
                 break;
             case 'Splitter':
-                this.grid!.addItemAtIndex(index, new Splitter(this).setScale(this.grid?.getGridSize().relativeScale));
+                item =  new Splitter(this)
                 break;
             case 'SwitchIn':
-                this.grid!.addItemAtIndex(index, new SwitchIn(this, false).setScale(this.grid?.getGridSize().relativeScale));
+                item = new SwitchIn(this, false);
                 break;
             case 'SwitchOut':
-                this.grid!.addItemAtIndex(index, new SwitchOut(this, false).setScale(this.grid?.getGridSize().relativeScale));
+                item = new SwitchOut(this, false)
                 break;
         }
-        this.levelData.items.push({ type: itemType, position: index });
+        item!.setScale(this.grid!.getGridSize().relativeScale);
+        this.grid!.addItemAtIndex(index, item!)
+        this.levelData.items.push({type: itemType, position: index});
     }
 
     private checkSources() {

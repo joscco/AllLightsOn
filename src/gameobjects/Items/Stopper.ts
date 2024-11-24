@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import {GameBaseColor, Item} from "../../interfaces/Item";
 import {Connection, PowerInfo} from "../Connection";
-import {GridSize} from "../Grid";
+import {GridSize} from "../GridStuff/Grid";
 
 // Allows stopping power flow
 export class Stopper extends Item {

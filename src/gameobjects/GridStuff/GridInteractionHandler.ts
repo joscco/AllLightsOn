@@ -1,9 +1,9 @@
 import Phaser from 'phaser';
 import {Grid} from './Grid';
-import {Connection} from './Connection';
-import {Vec2, vec2Equals} from '../Helpers/VecMath';
-import {AStarFinder} from '../AStar/AStarFinder';
-import {GAME_HEIGHT, GAME_WIDTH} from "../index";
+import {Connection} from '../Connection';
+import {Vec2, vec2Equals} from '../../Helpers/VecMath';
+import {AStarFinder} from '../../AStar/AStarFinder';
+import {GAME_HEIGHT, GAME_WIDTH} from "../../index";
 import Vector2 = Phaser.Math.Vector2;
 
 export class GridInteractionHandler {
@@ -41,10 +41,10 @@ export class GridInteractionHandler {
     private onPointerDown(pointer: Phaser.Math.Vector2) {
         this.pointerPressed = true;
         let index = this.grid!.getIndexForPosition(pointer);
-        let item = this.grid!.getItemAtIndex(index) ?? this.grid!.getConnectorAtIndex(index)?.item;
+        let item = this.grid?.getItemAtIndex(index) ?? this.grid?.getConnectorAtIndex(index)?.item;
         if (item) {
-            this.currentConnection = new Connection(this.scene, this.grid!.getGridSize());
-            this.grid!.addConnectionToLayer(this.currentConnection);
+            this.currentConnection = new Connection(this.scene);
+            this.grid?.addUnfinishedConnection(this.currentConnection);
             this.currentConnection.setStart(item);
             this.indexPath = [this.grid!.getIndexForPosition(pointer)];
             this.justStartedNewConnection = true;
@@ -89,12 +89,11 @@ export class GridInteractionHandler {
             }
             this.currentConnection!.setStart(otherItem);
             this.currentConnection!.setEnd(hoveredItem);
-            this.grid!.removeConnection(existingConnection);
+            this.grid?.removeConnection(existingConnection);
             this.onConnectionAdapted()
 
             let posPath = this.grid!.calculatePosPathFromIndices(this.indexPath);
-            this.currentConnection!.setPath(posPath, this.indexPath);
-            this.currentConnection!.draw();
+            this.currentConnection!.draw(posPath, this.indexPath);
         }
     }
 
@@ -106,15 +105,16 @@ export class GridInteractionHandler {
 
         if (startIndex > -1) {
             this.indexPath = this.indexPath.slice(this.indexPath.length - 1 - startIndex);
+            let startIsSource = this.grid.hasFreeOutputAt(this.indexPath[0]);
+            this.currentConnection?.setStartIsSource(startIsSource)
             this.trimInvalidPath();
             this.setConnectionEnd();
         } else {
             this.indexPath = [];
         }
 
-        let posPath = this.grid!.calculatePosPathFromIndices(this.indexPath);
-        this.currentConnection!.setPath(posPath, this.indexPath);
-        this.currentConnection!.draw();
+        let posPath = this.grid?.calculatePosPathFromIndices(this.indexPath);
+        this.currentConnection!.draw(posPath, this.indexPath);
     }
 
     private trimInvalidPath() {
@@ -177,7 +177,9 @@ export class GridInteractionHandler {
     }
 
     private finalizeConnection() {
-        if (this.currentConnection!.getStart() && this.currentConnection!.getEnd() && !this.grid!.hasConnection(this.currentConnection!)) {
+        if (this.currentConnection!.getStart()
+            && this.currentConnection!.getEnd()
+            && !this.grid?.hasSimilarConnection(this.currentConnection!)) {
             this.grid!.addConnection(this.currentConnection!);
             this.onConnectionAdapted()
             this.currentConnection = undefined;

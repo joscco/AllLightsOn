@@ -9,7 +9,7 @@ import Vector2 = Phaser.Math.Vector2;
 import Path = Phaser.Curves.Path;
 import Image = Phaser.GameObjects.Image;
 import Container = Phaser.GameObjects.Container;
-import {GridSize} from "./Grid";
+import {GridSize} from "./GridStuff/GridConsts";
 
 export enum PowerInfo {
     NO_INFO,
@@ -49,17 +49,17 @@ export class Connection extends Container {
 
     private showingElectrons: boolean = false
     private electronIndex: number = 0
-    private maxElectronScale: number
+    private maxElectronScale: number = 1
     private subStepsPerNode: number = 4;
     private lastElectronRoundStart: number = 0
     private electronImage: Image
     private electronMsPerNode: number = 100;
     private minWaitingTimeForNextElectron = 1000;
-    private lineSize: number
-    private connectorPointSize: number
+    private lineSize: number = 0
+    private connectorPointSize: number = 0
     private electronTimerEvent?: Phaser.Time.TimerEvent;
 
-    constructor(scene: Phaser.Scene, gridSize: GridSize) {
+    constructor(scene: Phaser.Scene) {
         super(scene)
         scene.add.existing(this)
         this.pathGraphics = scene.add.graphics()
@@ -71,12 +71,8 @@ export class Connection extends Container {
         this.offGraph.setVisible(false)
         this.offGraph.setDepth(DEPTHS.CONNECTIONS)
 
-        let unitSize = gridSize.unitSize
-        this.lineSize = unitSize * LINE_SIZE
-        this.connectorPointSize = unitSize * CONNECTOR_INSIDE_POINT_SIZE
-        this.maxElectronScale = gridSize.relativeScale
-
         this.electronImage = scene.add.image(0, 0, "electron")
+
         this.electronImage.setScale(0)
         this.electronImage.setDepth(DEPTHS.ELECTRONS)
         this.add([this.onGraph, this.offGraph, this.pathGraphics, this.electronImage])
@@ -84,55 +80,27 @@ export class Connection extends Container {
         this.createElectronTimer();
     }
 
-    private createElectronTimer() {
-        this.electronTimerEvent = this.scene.time.addEvent({
-            delay: this.electronMsPerNode / this.subStepsPerNode,
-            callback: () => {this.updateElectronPosition()},
-            callbackScope: this,
-            loop: true
-        });
+    setStartIsSource(startIsSource: boolean) {
+        this.startIsSource = startIsSource
     }
 
-    getStart(): Item | undefined {
-        return this.start;
+    setGridSize(gridSize: GridSize) {
+        let unitSize = gridSize.unitSize
+        this.lineSize = unitSize * LINE_SIZE
+        this.connectorPointSize = unitSize * CONNECTOR_INSIDE_POINT_SIZE
+        this.maxElectronScale = gridSize.relativeScale
     }
 
-    setStart(start: Item) {
-        this.start = start
-    }
+    draw(newPosPath?: Vec2[], newIndexPath?: Vec2[]) {
+        if (newPosPath) {
+            this.posPath = newPosPath
+            this.graphicsPath = this.calculateGraphicsPath()
+        }
 
-    getEnd(): Item | undefined {
-        return this.end
-    }
+        if (newIndexPath) {
+            this.indexPath = newIndexPath
+        }
 
-    setEnd(end: Item | undefined) {
-        this.end = end
-    }
-
-    resetEnd() {
-        this.end = undefined
-    }
-
-    isDirectedWithPower(): boolean {
-        return this.directedWithPower == PowerInfo.POWER_ON;
-    }
-
-    getPowerInfo(): PowerInfo {
-        return this.directedWithPower
-    }
-
-    setDirectedWithPower(val: PowerInfo) {
-        this.directedWithPower = val
-        this.draw()
-    }
-
-    setPath(posPath: Vec2[], indexPath: Vec2[]) {
-        this.posPath = posPath
-        this.indexPath = indexPath
-        this.graphicsPath = this.calculateGraphicsPath()
-    }
-
-    draw() {
         if (!this.isDirectedWithPower() || !this.end) {
             this.showingElectrons = false
             this.electronImage.setScale(0)
@@ -211,6 +179,105 @@ export class Connection extends Container {
         }
     }
 
+    // Will make the connection quicker to render by generating textures and eliminating the graphics
+    fixate(newPosPath?: Vec2[]) {
+        this.source = this.startIsSource ? this.getStart()! : this.getEnd()!;
+        this.sourceIndex = this.startIsSource ? this.getStartIndex() : this.getEndIndex()!;
+        this.consumer = this.startIsSource ? this.getEnd()! : this.getStart()!;
+        this.consumerIndex = this.startIsSource ? this.getEndIndex()! : this.getStartIndex();
+
+        if (newPosPath) {
+            this.posPath = newPosPath
+            this.graphicsPath = this.calculateGraphicsPath()
+        }
+
+        if (!this.startIsSource) {
+            this.posPath = this.posPath.reverse()
+            this.graphicsPath = this.calculateGraphicsPath()
+            this.indexPath = this.indexPath.reverse()
+            this.startIsSource = true
+        }
+
+        this.setDirectedWithPower(PowerInfo.POWER_ON)
+        this.drawGraphics()
+        let onKey = "connection_on_" + this.sourceIndex!.x + "_" + this.sourceIndex!.y
+        this.scene.textures.removeKey(onKey)
+        this.pathGraphics.generateTexture(onKey)
+        this.onGraph.setTexture(onKey)
+
+        this.setDirectedWithPower(PowerInfo.POWER_OFF)
+        this.drawGraphics()
+        let offKey = "connection_off_" + this.sourceIndex!.x + "_" + this.sourceIndex!.y
+        this.scene.textures.removeKey(offKey)
+        this.pathGraphics.generateTexture(offKey)
+        this.offGraph.setTexture(offKey)
+
+        this.pathGraphics.clear()
+        this.isFixated = true
+    }
+
+    private calculateGraphicsPath(): Path {
+        // Redrawing path
+        let path = new Path();
+        for (let i = 0; i < this.posPath.length - 1; i++) {
+            let first = this.posPath[i]
+            let second = this.posPath[i + 1]
+            let third = this.posPath[i + 2]
+
+            if (third && first.x != third.x && first.y != third.y) {
+                path.add(new QuadraticBezier(new Vector2(first.x, first.y), new Vector2(second.x, second.y), new Vector2(third.x, third.y)))
+                i += 1
+            } else {
+                path.add(new Line([first.x, first.y, second.x, second.y]))
+            }
+        }
+        return path
+    }
+
+    private createElectronTimer() {
+        this.electronTimerEvent = this.scene.time.addEvent({
+            delay: this.electronMsPerNode / this.subStepsPerNode,
+            callback: () => {
+                this.updateElectronPosition()
+            },
+            callbackScope: this,
+            loop: true
+        });
+    }
+
+    getStart(): Item | undefined {
+        return this.start;
+    }
+
+    setStart(start: Item) {
+        this.start = start
+    }
+
+    getEnd(): Item | undefined {
+        return this.end
+    }
+
+    setEnd(end: Item | undefined) {
+        this.end = end
+    }
+
+    resetEnd() {
+        this.end = undefined
+    }
+
+    isDirectedWithPower(): boolean {
+        return this.directedWithPower == PowerInfo.POWER_ON;
+    }
+
+    getPowerInfo(): PowerInfo {
+        return this.directedWithPower
+    }
+
+    setDirectedWithPower(val: PowerInfo) {
+        this.directedWithPower = val
+        this.draw()
+    }
+
     private updateElectronPosition() {
         if (!this.showingElectrons) {
             return;
@@ -248,14 +315,6 @@ export class Connection extends Container {
         return this.indexPath.at(-1)
     }
 
-    setSourceAndConsumerData(startIsSource: boolean) {
-        this.startIsSource = startIsSource
-        this.source = startIsSource ? this.getStart()! : this.getEnd()!;
-        this.sourceIndex = startIsSource ? this.getStartIndex() : this.getEndIndex()!;
-        this.consumer = startIsSource ? this.getEnd()! : this.getStart()!;
-        this.consumerIndex = startIsSource ? this.getEndIndex()! : this.getStartIndex();
-    }
-
     getSourceIndex() {
         return this.sourceIndex
     }
@@ -291,64 +350,19 @@ export class Connection extends Container {
                     this.pathGraphics.destroy()
                     this.destroy()
                 } else {
-                    this.reducePath()
+                    this.reducePosPathByOne()
                     this.graphicsPath = this.calculateGraphicsPath()
                     this.drawGraphics()
                 }
             }, Math.min(50, 300 / this.posPath.length))
         }
-
     }
 
-    private reducePath() {
+    private reducePosPathByOne() {
         if (this.startIsSource) {
             this.posPath = this.posPath.slice(1, this.posPath.length)
         } else {
             this.posPath = this.posPath.slice(0, this.posPath.length - 1)
         }
-    }
-
-    // Will make the connection quicker to render by generating textures and eliminating the graphics
-    fixate() {
-        if (!this.startIsSource) {
-            this.posPath = this.posPath.reverse()
-            this.graphicsPath = this.calculateGraphicsPath()
-            this.indexPath = this.indexPath.reverse()
-            this.startIsSource = true
-        }
-        this.setDirectedWithPower(PowerInfo.POWER_ON)
-        this.drawGraphics()
-        let onKey = "connection_on_" + this.sourceIndex!.x + "_" + this.sourceIndex!.y
-        this.scene.textures.removeKey(onKey)
-        this.pathGraphics.generateTexture(onKey)
-        this.onGraph.setTexture(onKey)
-
-        this.setDirectedWithPower(PowerInfo.POWER_OFF)
-        this.drawGraphics()
-        let offKey = "connection_off_" + this.sourceIndex!.x + "_" + this.sourceIndex!.y
-        this.scene.textures.removeKey(offKey)
-        this.pathGraphics.generateTexture(offKey)
-        this.offGraph.setTexture(offKey)
-
-        this.pathGraphics.clear()
-        this.isFixated = true
-    }
-
-    private calculateGraphicsPath(): Path {
-        // Redrawing path
-        let path = new Path();
-        for (let i = 0; i < this.posPath.length - 1; i++) {
-            let first = this.posPath[i]
-            let second = this.posPath[i + 1]
-            let third = this.posPath[i + 2]
-
-            if (third && first.x != third.x && first.y != third.y) {
-                path.add(new QuadraticBezier(new Vector2(first.x, first.y), new Vector2(second.x, second.y), new Vector2(third.x, third.y)))
-                i += 1
-            } else {
-                path.add(new Line([first.x, first.y, second.x, second.y]))
-            }
-        }
-        return path
     }
 }

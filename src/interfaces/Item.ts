@@ -5,7 +5,7 @@ import {Scene} from "phaser";
 import {Connection, PowerInfo} from "../gameobjects/Connection";
 import {Vec2} from "../Helpers/VecMath";
 import {DEPTHS} from "../Helpers/Depths";
-import {GridSize} from "../gameobjects/Grid";
+import { GridSize } from "../gameobjects/GridStuff/GridConsts";
 
 export enum GameBaseColor {
     ORANGE,
@@ -171,5 +171,9 @@ export abstract class Item extends Container {
 
     allowsForwarding(powerInfo: PowerInfo, outgoingConnection: Connection) {
         return true;
+    }
+
+    getGridIndex(): Vec2 | undefined {
+        return this.index
     }
 }

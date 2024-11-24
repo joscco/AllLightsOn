@@ -5,7 +5,7 @@ import {LEVEL_3} from "./level3";
 import {LEVEL_4} from "./level4";
 import {LEVEL_5} from "./level5";
 import {LEVEL_6} from "./level6";
-import {GridSize} from "../gameobjects/Grid";
+import {GridSize} from "../gameobjects/GridStuff/GridConsts";
 
 export interface LevelConfig {
     title?: string;

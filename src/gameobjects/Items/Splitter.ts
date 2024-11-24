@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import {Item, GameBaseColor} from "../../interfaces/Item";
 import {Connection} from "../Connection";
-import {GridSize} from "../Grid";
+import {GridSize} from "../GridStuff/Grid";
 
 // Links one source to multiple outputs
 export class Splitter extends Item {

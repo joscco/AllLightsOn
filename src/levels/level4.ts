@@ -1,5 +1,5 @@
 import {LevelConfig} from "./LevelConfig";
-import {GridSizes} from "../gameobjects/Grid";
+import {GridSizes} from "../gameobjects/GridStuff/GridConsts";
 
 export const LEVEL_4: LevelConfig = {
     "title": "Level 4",

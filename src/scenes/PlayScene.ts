@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
-import {Grid, GridSize, GridSizes} from '../gameobjects/Grid';
+import {Grid} from '../gameobjects/GridStuff/Grid';
 import {LEVEL_DATA, LevelConfig} from '../levels/LevelConfig';
-import {GridInteractionHandler} from '../gameobjects/GridInteractionHandler';
+import {GridInteractionHandler} from '../gameobjects/GridStuff/GridInteractionHandler';
 import {PowerForwarder} from '../gameobjects/PowerForwarder';
 import {Light} from '../gameobjects/Items/Light';
 import {Power} from '../gameobjects/Items/Power';
@@ -17,6 +17,7 @@ import {PowerInfo} from "../gameobjects/Connection";
 import {WinScreen} from "../gameobjects/WinScreen";
 import {Item} from "../interfaces/Item";
 import {DEPTHS} from "../Helpers/Depths";
+import {GridSize, GridSizes} from "../gameobjects/GridStuff/GridConsts";
 
 const TEXT_STYLE = {
     fontFamily: "ItemFont",
@@ -89,13 +90,12 @@ export default class PlayScene extends Phaser.Scene {
                     item = new SwitchOut(this, false);
                     break;
             }
-            item!.setScale(0)
             item!.setGridSize(this.grid!.getGridSize());
             this.grid!.addItemAtIndex(position, item!);
+            item!.setScale(0)
         });
 
         await this.grid!.fadeInGrid();
-        this.grid!.fadeInItems();
     }
 
     private createHeading(heading: string) {
@@ -162,17 +162,13 @@ export default class PlayScene extends Phaser.Scene {
     }
 
     private async startOtherLevel(levelNumber:number){
-        this.grid!.fadeOutConnections();
         this.winScreen!.fadeOut()
-        await this.grid!.fadeOutItems();
         await this.grid!.fadeOutGrid();
         this.scene.restart({level: levelNumber})
     }
 
     private async goToLevelSelectScene() {
-        this.grid!.fadeOutConnections();
         this.winScreen!.fadeOut()
-        await this.grid!.fadeOutItems();
         await this.grid!.fadeOutGrid();
         this.scene.start('LevelSelectScene');
     }
