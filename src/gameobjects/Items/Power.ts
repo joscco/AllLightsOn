@@ -1,6 +1,5 @@
 import Phaser from "phaser";
-import {Item, GameBaseColor, GameColors} from "../../interfaces/Item";
-import {GridSize} from "../Grid";
+import {GameBaseColor, Item} from "../../interfaces/Item";
 
 // Produces power
 export class Power extends Item {

@@ -1,11 +1,13 @@
 import Phaser from 'phaser';
 import Text = Phaser.GameObjects.Text;
 import {GAME_HEIGHT, GAME_WIDTH, ITEM_FONT} from "../index";
+import Tween = Phaser.Tweens.Tween;
 
 
 export default class Preloader extends Phaser.Scene {
 
     private loadingText?: Text
+    private scaleTween?: Tween;
 
     constructor() {
         super({key: 'Preloader', active: true});
@@ -18,9 +20,11 @@ export default class Preloader extends Phaser.Scene {
             {fontFamily: ITEM_FONT, fontSize: '32px', color: '#fff'});
         this.loadingText.setOrigin(0.5);
         this.loadingText.setAlign('center');
+        this.loadingText.setAlpha(0);
 
         this.load.on('progress', (value: number) => {
             this.updateLoadingText(value);
+            this.loadingText?.setAlpha(value)
         });
 
         this.load.image('base_blue_1_1', 'assets/images/Blue_1_1.png');
@@ -49,16 +53,18 @@ export default class Preloader extends Phaser.Scene {
         this.load.image('connector_plus', 'assets/images/ConnectorPlus.png');
         this.load.image('connector_minus', 'assets/images/ConnectorMinus.png');
 
-        // this.load.json('level1', 'assets/levels/level1.json');
+        this.load.image('button_home', 'assets/images/Button_Home.png');
+        this.load.image('button_retry', 'assets/images/Button_Back.png');
+        this.load.image('button_options', 'assets/images/Button_Options.png');
     }
 
     create() {
-        // Fade out text, then start the title scene
-        this.tweens.add({
+        this.scaleTween?.destroy();
+        this.scaleTween = this.tweens.add({
             targets: this.loadingText,
             alpha: 0,
-            duration: 1000,
-            ease: 'Power2',
+            duration: 500,
+            ease: Phaser.Math.Easing.Quadratic.InOut,
             onComplete: () => {
                 this.scene.launch("TitleScene")
             },

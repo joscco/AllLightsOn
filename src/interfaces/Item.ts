@@ -3,7 +3,7 @@ import TweenChain = Phaser.Tweens.TweenChain;
 import Container = Phaser.GameObjects.Container;
 import {Scene} from "phaser";
 import {Connection, PowerInfo} from "../gameobjects/Connection";
-import {Vec2, vec2Add} from "../Helpers/VecMath";
+import {Vec2} from "../Helpers/VecMath";
 import {DEPTHS} from "../Helpers/Depths";
 import {GridSize} from "../gameobjects/Grid";
 

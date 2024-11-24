@@ -78,7 +78,7 @@ export default class LevelSelectScene extends Phaser.Scene {
                         return {
                             at: index * 100,
                             targets: button,
-                            y: GAME_HEIGHT,
+                            y: GAME_HEIGHT + index * 100,
                             alpha: 0,
                             duration: 500,
                             ease: Phaser.Math.Easing.Quadratic.InOut

@@ -2,7 +2,6 @@ import Phaser from "phaser";
 import {GameBaseColor, Item} from "../../interfaces/Item";
 import {Connection} from "../Connection";
 import Image = Phaser.GameObjects.Image;
-import {GridSize} from "../Grid";
 
 // Turns power into light
 export class Light extends Item {
@@ -18,6 +17,7 @@ export class Light extends Item {
 
         this.onSprite = this.scene.add.image(0, -67, 'light_on')
         this.overlay = this.scene.add.image(0, -100, 'light_overlay')
+        this.overlay.setScale(0.8)
         this.add([this.overlay, this.onSprite])
         this.setOn(false, true)
     }

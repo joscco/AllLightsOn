@@ -1,11 +1,9 @@
 import Phaser from 'phaser';
-import {GAME_WIDTH, GAME_HEIGHT} from '../index';
+import {GAME_HEIGHT, GAME_WIDTH} from '../index';
 import {DEPTHS} from "../Helpers/Depths";
-import {GridInteractionHandler} from "./GridInteractionHandler";
-import {Grid} from "./Grid";
 
 export class WinScreen extends Phaser.GameObjects.Container {
-    constructor(scene: Phaser.Scene, grid: Grid, nextLevel?: number) {
+    constructor(scene: Phaser.Scene, onPrevious: () => void, onNext?: () => void) {
         super(scene, GAME_WIDTH / 2, GAME_HEIGHT + 200);
 
         // Add a nine-patch image as the background
@@ -25,7 +23,7 @@ export class WinScreen extends Phaser.GameObjects.Container {
         winText.setOrigin(0.5, 0.5);
         this.add(winText);
 
-        if (nextLevel !== undefined) {
+        if (onNext !== undefined) {
             // Add "Next Level" button
             const nextLevelButton = scene.add.text(300, 0, "Next Level", {
                 fontFamily: "ItemFont",
@@ -34,11 +32,7 @@ export class WinScreen extends Phaser.GameObjects.Container {
             }).setInteractive();
             nextLevelButton.setOrigin(0.5, 0.5);
             nextLevelButton.on('pointerdown', async () => {
-                grid.fadeOutConnections();
-                this.fadeOut()
-                await grid.fadeOutItems();
-                await grid.fadeOutGrid();
-                scene.scene.restart({level: nextLevel});
+               onNext();
             });
             this.add(nextLevelButton);
         }
@@ -51,7 +45,7 @@ export class WinScreen extends Phaser.GameObjects.Container {
         }).setInteractive();
         returnButton.setOrigin(0.5, 0.5);
         returnButton.on('pointerdown', () => {
-            scene.scene.start('LevelSelectScene');
+            onPrevious();
         });
         this.add(returnButton);
 

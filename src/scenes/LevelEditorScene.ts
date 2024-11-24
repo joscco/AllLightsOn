@@ -22,6 +22,7 @@ const TEXT_STYLE = {
 };
 
 export class LevelEditorScene extends Phaser.Scene {
+    private gridSizes = [GridSizes.XS, GridSizes.S, GridSizes.M, GridSizes.L, GridSizes.XL];
     private grid?: Grid;
     private gridInteractionHandler?: GridInteractionHandler;
     private powerForwarder?: PowerForwarder;
@@ -29,13 +30,29 @@ export class LevelEditorScene extends Phaser.Scene {
         title: "New Level",
         size: GridSizes.M,
         rows: 6,
-        columns: 12,
+        columns: 6,
         items: [],
         connections: []
     };
 
+    private increaseRowsButton?: Phaser.GameObjects.Image;
+    private decreaseRowsButton?: Phaser.GameObjects.Image;
+    private increaseColsButton?: Phaser.GameObjects.Image;
+    private decreaseColsButton?: Phaser.GameObjects.Image;
+    private increaseSizeButton?: Phaser.GameObjects.Image;
+    private decreaseSizeButton?: Phaser.GameObjects.Image;
+
     constructor(key: string = 'LevelEditorScene') {
-        super({key: key});
+        super({ key: key });
+    }
+
+    preload() {
+        this.load.image('increaseRows', 'assets/images/editor/addRow.png');
+        this.load.image('decreaseRows', 'assets/images/editor/removeRow.png');
+        this.load.image('increaseCols', 'assets/images/editor/addColumn.png');
+        this.load.image('decreaseCols', 'assets/images/editor/removeColumn.png');
+        this.load.image('increaseSize', 'assets/images/editor/zoomIn.png');
+        this.load.image('decreaseSize', 'assets/images/editor/zoomOut.png');
     }
 
     create() {
@@ -48,14 +65,15 @@ export class LevelEditorScene extends Phaser.Scene {
 
     private createHeading(heading: string) {
         let text = this.add.text(GAME_WIDTH / 2, 50, heading, TEXT_STYLE);
-        text.setOrigin(0.5, 0.5);
+        text.setOrigin(0.5);
+        text.setAlign('center');
     }
 
     private createGrid(columns: number, rows: number, size: GridSize) {
         this.grid = new Grid(
             this,
             GAME_WIDTH / 2,
-            GAME_HEIGHT / 2 - 100,
+            GAME_HEIGHT / 2,
             columns, rows,
             size
         );
@@ -70,15 +88,15 @@ export class LevelEditorScene extends Phaser.Scene {
     private createToolMenu() {
         const toolMenu = this.add.container(0, GAME_HEIGHT - 100);
         const items = [
-            {type: 'Power', texture: 'powerTexture'},
-            {type: 'Light', texture: 'lightTexture'},
-            {type: 'Stopper', texture: 'stopperTexture'},
-            {type: 'And', texture: 'andTexture'},
-            {type: 'Or', texture: 'orTexture'},
-            {type: 'Not', texture: 'notTexture'},
-            {type: 'Splitter', texture: 'splitterTexture'},
-            {type: 'SwitchIn', texture: 'switchInTexture'},
-            {type: 'SwitchOut', texture: 'switchOutTexture'}
+            { type: 'Power', texture: 'powerTexture' },
+            { type: 'Light', texture: 'lightTexture' },
+            { type: 'Stopper', texture: 'stopperTexture' },
+            { type: 'And', texture: 'andTexture' },
+            { type: 'Or', texture: 'orTexture' },
+            { type: 'Not', texture: 'notTexture' },
+            { type: 'Splitter', texture: 'splitterTexture' },
+            { type: 'SwitchIn', texture: 'switchInTexture' },
+            { type: 'SwitchOut', texture: 'switchOutTexture' }
         ];
 
         items.forEach((item, index) => {
@@ -104,57 +122,85 @@ export class LevelEditorScene extends Phaser.Scene {
     }
 
     private createGridDimensionButtons() {
-        const increaseRowsButton = this.add.text(50, 150, 'Increase Rows', {
-            fontSize: '20px',
-            color: '#fff'
-        }).setInteractive();
-        const decreaseRowsButton = this.add.text(50, 180, 'Decrease Rows', {
-            fontSize: '20px',
-            color: '#fff'
-        }).setInteractive();
-        const increaseColsButton = this.add.text(50, 210, 'Increase Columns', {
-            fontSize: '20px',
-            color: '#fff'
-        }).setInteractive();
-        const decreaseColsButton = this.add.text(50, 240, 'Decrease Columns', {
-            fontSize: '20px',
-            color: '#fff'
-        }).setInteractive();
-        const increaseSizeButton = this.add.text(50, 270, 'Increase Size', {
-            fontSize: '20px',
-            color: '#fff'
-        }).setInteractive();
-        const decreaseSizeButton = this.add.text(50, 300, 'Decrease Size', {
-            fontSize: '20px',
-            color: '#fff'
-        }).setInteractive();
+        this.increaseRowsButton = this.add.image(100, 150, 'increaseRows').setInteractive();
+        this.decreaseRowsButton = this.add.image(200, 150, 'decreaseRows').setInteractive();
+        this.increaseColsButton = this.add.image(100, 300, 'increaseCols').setInteractive();
+        this.decreaseColsButton = this.add.image(200, 300, 'decreaseCols').setInteractive();
+        this.increaseSizeButton = this.add.image(100, 450, 'increaseSize').setInteractive();
+        this.decreaseSizeButton = this.add.image(200, 450, 'decreaseSize').setInteractive();
 
-        increaseRowsButton.on('pointerdown', () => this.updateGridDimensions(this.levelData.columns, this.levelData.rows + 1, this.levelData.size!));
-        decreaseRowsButton.on('pointerdown', () => this.updateGridDimensions(this.levelData.columns, this.levelData.rows - 1, this.levelData.size!));
-        increaseColsButton.on('pointerdown', () => this.updateGridDimensions(this.levelData.columns + 1, this.levelData.rows, this.levelData.size!));
-        decreaseColsButton.on('pointerdown', () => this.updateGridDimensions(this.levelData.columns - 1, this.levelData.rows, this.levelData.size!));
-        increaseSizeButton.on('pointerdown', () => this.updateGridDimensions(this.levelData.columns, this.levelData.rows, this.getNextGridSize(this.levelData.size!)));
-        decreaseSizeButton.on('pointerdown', () => this.updateGridDimensions(this.levelData.columns, this.levelData.rows, this.getPreviousGridSize(this.levelData.size!)));
+        this.increaseRowsButton.on('pointerdown', () => this.updateGridDimensions(this.levelData.columns, this.levelData.rows + 1, this.levelData.size!));
+        this.decreaseRowsButton.on('pointerdown', () => this.updateGridDimensions(this.levelData.columns, this.levelData.rows - 1, this.levelData.size!));
+        this.increaseColsButton.on('pointerdown', () => this.updateGridDimensions(this.levelData.columns + 1, this.levelData.rows, this.levelData.size!));
+        this.decreaseColsButton.on('pointerdown', () => this.updateGridDimensions(this.levelData.columns - 1, this.levelData.rows, this.levelData.size!));
+        this.increaseSizeButton.on('pointerdown', () => this.updateGridDimensions(this.levelData.columns, this.levelData.rows, this.getNextGridSize(this.levelData.size!)));
+        this.decreaseSizeButton.on('pointerdown', () => this.updateGridDimensions(this.levelData.columns, this.levelData.rows, this.getPreviousGridSize(this.levelData.size!)));
+
+        this.updateButtonStates();
     }
 
     private updateGridDimensions(columns: number, rows: number, size: GridSize) {
         this.levelData.columns = columns;
         this.levelData.rows = rows;
         this.levelData.size = size;
-        //this.grid?.destroy();
-        this.createGrid(columns, rows, size);
+        this.grid!.updateGridDimensions(columns, rows, size);
+        this.grid!.showGrid();
+        this.updateButtonStates();
+    }
+
+    private updateButtonStates() {
+        let currentSizeIndex = this.gridSizes.indexOf(this.levelData.size!);
+        this.increaseRowsButton!.setAlpha(this.levelData.rows < 14 ? 1 : 0.5);
+        if (this.levelData.rows < 14) {
+            this.increaseRowsButton!.setInteractive();
+        } else {
+            this.increaseRowsButton!.disableInteractive();
+        }
+
+        this.decreaseRowsButton!.setAlpha(this.levelData.rows > 1 ? 1 : 0.5);
+        if (this.levelData.rows > 1) {
+            this.decreaseRowsButton!.setInteractive();
+        } else {
+            this.decreaseRowsButton!.disableInteractive();
+        }
+
+        this.increaseColsButton!.setAlpha(this.levelData.columns < 20 ? 1 : 0.5);
+        if (this.levelData.columns < 20) {
+            this.increaseColsButton!.setInteractive();
+        } else {
+            this.increaseColsButton!.disableInteractive();
+        }
+
+        this.decreaseColsButton!.setAlpha(this.levelData.columns > 1 ? 1 : 0.5);
+        if (this.levelData.columns > 1) {
+            this.decreaseColsButton!.setInteractive();
+        } else {
+            this.decreaseColsButton!.disableInteractive();
+        }
+
+        this.increaseSizeButton!.setAlpha(currentSizeIndex < this.gridSizes.length - 1 ? 1 : 0.5);
+        if (currentSizeIndex < this.gridSizes.length - 1) {
+            this.increaseSizeButton!.setInteractive();
+        } else {
+            this.increaseSizeButton!.disableInteractive();
+        }
+
+        this.decreaseSizeButton!.setAlpha(currentSizeIndex > 0 ? 1 : 0.5);
+        if (currentSizeIndex > 0) {
+            this.decreaseSizeButton!.setInteractive();
+        } else {
+            this.decreaseSizeButton!.disableInteractive();
+        }
     }
 
     private getNextGridSize(currentSize: GridSize): GridSize {
-        const sizes = [GridSizes.S, GridSizes.M, GridSizes.L, GridSizes.XL];
-        const currentIndex = sizes.indexOf(currentSize);
-        return sizes[(currentIndex + 1) % sizes.length];
+        const currentIndex = this.gridSizes.indexOf(currentSize);
+        return this.gridSizes[currentIndex + 1];
     }
 
     private getPreviousGridSize(currentSize: GridSize): GridSize {
-        const sizes = [GridSizes.S, GridSizes.M, GridSizes.L, GridSizes.XL];
-        const currentIndex = sizes.indexOf(currentSize);
-        return sizes[(currentIndex - 1 + sizes.length) % sizes.length];
+        const currentIndex = this.gridSizes.indexOf(currentSize);
+        return this.gridSizes[currentIndex - 1];
     }
 
     private addItemToGrid(itemType: string, index: { x: number, y: number }) {
@@ -187,7 +233,7 @@ export class LevelEditorScene extends Phaser.Scene {
                 this.grid!.addItemAtIndex(index, new SwitchOut(this, false).setScale(this.grid?.getGridSize().relativeScale));
                 break;
         }
-        this.levelData.items.push({type: itemType, position: index});
+        this.levelData.items.push({ type: itemType, position: index });
     }
 
     private checkSources() {

@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
-import {Grid} from '../gameobjects/Grid';
-import {Connection} from '../gameobjects/Connection';
+import {Grid} from './Grid';
+import {Connection} from './Connection';
 import {Vec2, vec2Equals} from '../Helpers/VecMath';
 import {AStarFinder} from '../AStar/AStarFinder';
 import {GAME_HEIGHT, GAME_WIDTH} from "../index";

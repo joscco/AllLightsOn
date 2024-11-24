@@ -2,7 +2,6 @@ import Phaser from "phaser";
 import {GameBaseColor, Item} from "../../interfaces/Item";
 import {Connection, PowerInfo} from "../Connection";
 import {vec2Equals} from "../../Helpers/VecMath";
-import {GridSize} from "../Grid";
 
 // Allows switching between multiple outputs
 export class SwitchOut extends Item {

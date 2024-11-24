@@ -16,6 +16,7 @@ import {GAME_HEIGHT, GAME_WIDTH} from '../index';
 import {PowerInfo} from "../gameobjects/Connection";
 import {WinScreen} from "../gameobjects/WinScreen";
 import {Item} from "../interfaces/Item";
+import {DEPTHS} from "../Helpers/Depths";
 
 const TEXT_STYLE = {
     fontFamily: "ItemFont",
@@ -47,6 +48,7 @@ export default class PlayScene extends Phaser.Scene {
 
     private async setupLevel(config: LevelConfig) {
         this.createHeading(config.title ?? "Turn on all Lights");
+        this.createButtons();
         this.createGrid(config.columns, config.rows, config.size ?? GridSizes.M);
         this.createWinScreen()
         this.gridInteractionHandler = new GridInteractionHandler(
@@ -99,6 +101,7 @@ export default class PlayScene extends Phaser.Scene {
     private createHeading(heading: string) {
         let text = this.add.text(GAME_WIDTH / 2, 100, heading, TEXT_STYLE);
         text.setOrigin(0.5, 0.5);
+        text.setAlign('center');
     }
 
     private createGrid(columns: number, rows: number, size: GridSize) {
@@ -136,8 +139,45 @@ export default class PlayScene extends Phaser.Scene {
     }
 
     private createWinScreen() {
-        this.winScreen = new WinScreen(this,
-            this.grid!,
-            (LEVEL_DATA.length == this.level) ? undefined : this.level! + 1);
+        this.winScreen = new WinScreen(
+            this,
+            () => {this.goToLevelSelectScene()},
+            (LEVEL_DATA.length == this.level) ? undefined : () => {this.startOtherLevel(this.level! + 1)}
+        );
+    }
+
+    private createButtons() {
+        const homeButton = this.add.image(150, 100, 'button_home').setDepth(DEPTHS.BUTTONS).setInteractive();
+        const retryButton = this.add.image(300, 100, 'button_retry').setDepth(DEPTHS.BUTTONS).setInteractive();
+        const optionsButton = this.add.image(GAME_WIDTH - 150, 100, 'button_options').setDepth(DEPTHS.BUTTONS).setInteractive();
+
+        homeButton.on('pointerdown', () => this.goToLevelSelectScene());
+        retryButton.on('pointerdown', () => this.restartLevel());
+        optionsButton.on('pointerdown', () => this.openOptionsMenu());
+    }
+
+    private restartLevel() {
+        console.log("Restart")
+        this.startOtherLevel(this.level!);
+    }
+
+    private async startOtherLevel(levelNumber:number){
+        this.grid!.fadeOutConnections();
+        this.winScreen!.fadeOut()
+        await this.grid!.fadeOutItems();
+        await this.grid!.fadeOutGrid();
+        this.scene.restart({level: levelNumber})
+    }
+
+    private async goToLevelSelectScene() {
+        this.grid!.fadeOutConnections();
+        this.winScreen!.fadeOut()
+        await this.grid!.fadeOutItems();
+        await this.grid!.fadeOutGrid();
+        this.scene.start('LevelSelectScene');
+    }
+
+    private openOptionsMenu() {
+        this.scene.start('OptionsScene');
     }
 }

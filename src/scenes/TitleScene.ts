@@ -26,7 +26,7 @@ export default class TitleScene extends Phaser.Scene {
 
         this.startButton = new TextButton(this,
             GAME_WIDTH / 2, GAME_HEIGHT + 200,
-            400, 100,
+            300, 100,
             'Start Game',
             () => {
                 this.fadeOutAndStart('LevelSelectScene');
@@ -43,7 +43,7 @@ export default class TitleScene extends Phaser.Scene {
 
         this.levelEditorButton = new TextButton(this,
             GAME_WIDTH / 2, GAME_HEIGHT + 400,
-            250, 100,
+            300, 100,
             'Level Editor',
             () => {
                 this.fadeOutAndStart('LevelEditorScene');
@@ -69,7 +69,7 @@ export default class TitleScene extends Phaser.Scene {
                 {
                     at: 200,
                     targets: this.startButton,
-                    y: GAME_HEIGHT / 2,
+                    y: 500,
                     duration: 500,
                     ease: 'Power2',
 
@@ -77,7 +77,7 @@ export default class TitleScene extends Phaser.Scene {
                 {
                     at: 400,
                     targets: this.optionsButton,
-                    y: 700,
+                    y: 650,
                     duration: 500,
                     ease: 'Power2',
                 },
@@ -100,31 +100,29 @@ export default class TitleScene extends Phaser.Scene {
             tweens: [
                 {
                     at: 0,
+                    targets: this.title,
+                    y: -200,
+                    duration: 300,
+                    ease: Phaser.Math.Easing.Quadratic.InOut,
+                },
+                {
+                    at: 0,
+                    targets: this.levelEditorButton,
+                    y: GAME_HEIGHT + 400,
+                    duration: 300,
+                    ease: Phaser.Math.Easing.Quadratic.InOut,
+                },
+                {
+                    at: 100,
                     targets: this.optionsButton,
                     y: GAME_HEIGHT + 300,
                     duration: 300,
                     ease: Phaser.Math.Easing.Quadratic.InOut,
-
-                },
-                {
-                    at: 100,
-                    targets: this.startButton,
-                    y: GAME_HEIGHT + 200,
-                    duration: 300,
-                    ease: Phaser.Math.Easing.Quadratic.InOut,
-
                 },
                 {
                     at: 200,
-                    targets: this.title,
-                    y: GAME_HEIGHT + 100,
-                    duration: 300,
-                    ease: Phaser.Math.Easing.Quadratic.InOut,
-                },
-                {
-                    at: 300,
-                    targets: this.levelEditorButton,
-                    y: GAME_HEIGHT + 400,
+                    targets: this.startButton,
+                    y: GAME_HEIGHT + 200,
                     duration: 300,
                     ease: Phaser.Math.Easing.Quadratic.InOut,
                 }

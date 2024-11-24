@@ -2,7 +2,6 @@ import Phaser from "phaser";
 import {GameBaseColor, Item, TEXT_COLOR_WHEN_OFF, TEXT_COLOR_WHEN_ON} from "../../interfaces/Item";
 import {Connection} from "../Connection";
 import Text = Phaser.GameObjects.Text;
-import {GridSize} from "../Grid";
 
 // Forwards power only if both sources are on
 export class And extends Item {
