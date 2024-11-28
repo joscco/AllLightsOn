@@ -10,7 +10,6 @@ import {GridCalculator} from "./GridCalculator";
 import {AStarGrid} from "../../AStar/AStarFinder";
 
 export class Grid implements AStarGrid {
-    private scene: Scene;
     private x: number;
     private y: number;
     private gridSize: GridSize;
@@ -20,7 +19,6 @@ export class Grid implements AStarGrid {
     private gridConnections: GridConnections;
 
     constructor(scene: Scene, centerX: number, centerY: number, columns: number, rows: number, gridSize: GridSize) {
-        this.scene = scene;
         this.x = centerX;
         this.y = centerY;
         this.gridSize = gridSize;
@@ -153,10 +151,9 @@ export class Grid implements AStarGrid {
         pathsWithBetweens.push(indexPath.at(-1)!);
 
         return pathsWithBetweens.map(index => this.getPositionForIndex(index));
-
     }
 
-    getConnectionForConnectorIndex(index: Vec2) {
+    getConnectionWithConnectorIndex(index: Vec2) {
         return this.gridConnections.getConnectionForConnectorIndex(index);
     }
 

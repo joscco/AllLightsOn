@@ -17,7 +17,7 @@ export class GridCalculator {
         private y: number,
         private columns: number,
         private rows: number,
-        private gridSize: GridSize
+        gridSize: GridSize
     ) {
         this.colWidth = gridSize.unitSize;
         this.rowWidth = gridSize.unitSize;

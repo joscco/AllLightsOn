@@ -108,7 +108,7 @@ export class GridItems {
                     at: index * 100,
                     targets: item,
                     scale: this.gridSize!.relativeScale,
-                    ease: Phaser.Math.Easing.Quadratic.InOut,
+                    ease: Phaser.Math.Easing.Back.Out,
                     duration: 500
                 };
             })

@@ -48,7 +48,9 @@ export class GridPoints {
         for (let pos of pointPositions) {
             this.gridPointsGraphics.fillCircle(pos.x, pos.y, GRID_POINT_SIZE * this.gridSize.unitSize);
         }
-        this.scene.textures.remove("gridPointsTexture");
+        if (this.scene.textures.exists("gridPointsTexture")) {
+            this.scene.textures.remove("gridPointsTexture");
+        }
         this.gridPointsGraphics.generateTexture('gridPointsTexture', GAME_WIDTH, GAME_HEIGHT);
         this.gridPointsGraphics.clear();
         this.gridImage = this.scene.add.image(0, 0, 'gridPointsTexture').setOrigin(0, 0);
@@ -87,7 +89,9 @@ export class GridPoints {
         // Draw single grid point as reference
         let gridPointRadius = GRID_POINT_SIZE * this.gridSize.unitSize;
         this.gridPointsGraphics.fillCircle(gridPointRadius, gridPointRadius, gridPointRadius);
-        this.scene.textures.remove("singleGridPointTexture");
+        if (this.scene.textures.exists("singleGridPointTexture")) {
+            this.scene.textures.remove("singleGridPointTexture");
+        }
         this.gridPointsGraphics.generateTexture('singleGridPointTexture', 2 * gridPointRadius, 2 * gridPointRadius);
         this.gridPointsGraphics.clear();
 

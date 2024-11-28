@@ -192,9 +192,11 @@ export class Connection extends Container {
         }
 
         if (!this.startIsSource) {
+            this.start = this.source
+            this.end = this.consumer
+            this.indexPath = this.indexPath.reverse()
             this.posPath = this.posPath.reverse()
             this.graphicsPath = this.calculateGraphicsPath()
-            this.indexPath = this.indexPath.reverse()
             this.startIsSource = true
         }
 
@@ -307,6 +309,10 @@ export class Connection extends Container {
         }
     }
 
+    isConnectedTo(item: Item): boolean {
+        return this.start == item || this.end == item
+    }
+
     getStartIndex() {
         return this.indexPath[0]
     }
@@ -359,10 +365,6 @@ export class Connection extends Container {
     }
 
     private reducePosPathByOne() {
-        if (this.startIsSource) {
-            this.posPath = this.posPath.slice(1, this.posPath.length)
-        } else {
-            this.posPath = this.posPath.slice(0, this.posPath.length - 1)
-        }
+        this.posPath = this.posPath.slice(0, this.posPath.length - 1)
     }
 }
